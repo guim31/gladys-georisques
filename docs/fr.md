@@ -1,67 +1,212 @@
-# Template de démonstration
+# Géorisques
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Amène dans Gladys les **risques naturels et technologiques de votre commune**, tels que les
+publie Géorisques (le site « Connaître les risques près de chez moi » du ministère de la
+Transition écologique) : retrait-gonflement des argiles, radon, séisme, inondation, usines
+classées, cavités, mouvements de terrain et arrêtés de catastrophe naturelle. Sans compte ni
+clé.
+
+> **C'est une information, pas un système d'alerte de sécurité.** Les données viennent de
+> Géorisques, avec ses délais de mise à jour et ses éventuelles erreurs. L'intégration ne
+> remplace ni l'état des risques officiel (obligatoire lors d'une vente ou d'une location), ni
+> les consignes de votre mairie ou de la préfecture. Intégration non affiliée au ministère de la
+> Transition écologique ni à l'État.
+>
+> Développée sans connexion réelle à Géorisques : vos retours sont bienvenus. Le service n'était
+> pas joignable depuis l'environnement de développement ; l'intégration a été testée sur des
+> réponses reconstituées d'après la documentation officielle de l'API.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- **Un appareil « Risques de ma commune »** avec, en un coup d'œil : l'exposition de votre
+  logement au **retrait-gonflement des argiles**, le **potentiel radon** de la commune, sa **zone
+  sismique**, la présence d'un **plan de prévention inondation** (PPRI) ou d'un **territoire à
+  risque important d'inondation** (TRI), le nombre d'**installations classées** et de **sites
+  Seveso** (dans la commune et à moins de 5 km de chez vous), de **cavités souterraines** et de
+  **mouvements de terrain** recensés, et les **arrêtés de catastrophe naturelle** reconnus
+  depuis 1982, avec le dernier (son type et sa date).
+- Un **déclencheur de scène** « Nouvel arrêté de catastrophe naturelle » : c'est l'événement
+  qui compte pour votre assurance habitation.
+- Un **widget** de tableau de bord qui résume tout cela en couleurs, avec un lien vers le
+  rapport Géorisques de votre adresse.
+- Un bouton **« Lire maintenant »** dans la configuration, pour vérifier que la bonne commune est
+  trouvée.
+
+Ces données changent rarement : l'intégration lit Géorisques **une fois par jour**, au
+démarrage et quand vous enregistrez la configuration. Pas de flot de requêtes.
+
+## Prérequis
+
+- Gladys Assistant **5.2.0** ou plus récent.
+- Un accès à Internet depuis Gladys : l'intégration lit `www.georisques.gouv.fr` et, pour
+  trouver la commune d'une maison ou d'une adresse, le service d'adresses de l'IGN
+  (`data.geopf.fr`).
+- Une maison **en France** : métropole, ou outre-mer pour les données que Géorisques y publie.
+- Pour l'option par défaut, la **position de votre maison** dans Gladys (Paramètres, Maisons).
+  L'intégration la demande à l'installation (permission « localisation »). Elle ne sert qu'à
+  trouver la commune et l'exposition aux argiles ; elle n'est ni enregistrée ni écrite dans les
+  journaux.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+### Réglages
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+| Réglage                            | Ce qu'il fait                                                                                                                                                                    |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Position                           | **Ma maison dans Gladys** (par défaut), **Une adresse** ou **Une commune (code INSEE)**.                                                                                         |
+| Maison                             | La maison dont la position compte, si vous en avez plusieurs. Vide : la première maison de Gladys qui a une position.                                                            |
+| Adresse                            | Numéro, rue et commune, comme sur une enveloppe : `12 rue de la Mairie, 31000 Toulouse`. Le nom d'une commune seul fonctionne aussi, mais sans position précise (voir plus bas). |
+| Code INSEE de la commune           | 5 caractères, **ce n'est pas le code postal** : `31555` pour Toulouse, `2A004` pour Ajaccio. Il figure sur votre avis de taxe foncière ou sur le site de l'Insee.                |
+| Langue des noms de fonctionnalités | Noms des fonctionnalités du nouvel appareil, langue de ses textes (inondation, dernière catastrophe) et des variables du déclencheur. Français par défaut.                       |
 
-## Actions
+Enregistrez, puis ouvrez l'onglet **Découverte** et créez l'appareil.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+**Avec une position** (maison ou adresse précise), vous obtenez tout. **Avec un code INSEE**, ou
+une adresse réduite au nom d'une commune, l'appareil n'a ni l'exposition aux argiles ni les
+sites Seveso à moins de 5 km : ces deux informations dépendent de l'endroit exact du logement,
+pas de la commune.
 
-## Scènes
+À Paris, Lyon et Marseille, l'appareil est celui de la commune (75056, 69123, 13055), là où
+Géorisques range les arrêtés et les plans ; le radon est lu pour votre arrondissement quand la
+position ou l'adresse le donne.
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+### Vérifier : « Lire maintenant »
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+Le bouton **Lire maintenant** relit Géorisques et répond, par exemple : « Chevilly-Larue
+(94021) : lu à l'instant. 6 arrêté(s) de catastrophe naturelle depuis 1982. » Si la commune
+n'est pas la bonne, corrigez la position ou l'adresse. Si quelque chose manque (maison sans
+position, adresse introuvable, code INSEE invalide), le message et l'écran de configuration le
+disent.
 
-## Tableau de bord
+## Appareil
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Un appareil par commune, nommé « Risques de ma commune (Toulouse) ». Ses fonctionnalités sont
+en lecture seule :
+
+| Fonctionnalité                   | Type (Gladys)    | Valeur                                                                                                                                                                                                                      |
+| -------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Retrait-gonflement des argiles   | Niveau de risque | Exposition **à l'endroit du logement** : 0 nulle (vert, « Pas de risque »), 1 faible (jaune), 2 moyenne (orange), 3 forte (rouge). Les argiles qui gonflent l'hiver et se rétractent l'été fissurent les maisons.           |
+| Potentiel radon                  | Niveau de risque | Catégorie de la commune : 1 faible (jaune), 2 faible mais avec des facteurs qui facilitent le passage du radon (orange), 3 significatif (rouge). En catégorie 3, l'information des acheteurs et locataires est obligatoire. |
+| Zone sismique                    | Valeur sismique  | Zone réglementaire de 1 (très faible) à 5 (forte, Antilles). Le chiffre officiel, sans transformation.                                                                                                                      |
+| Inondation (PPRI, TRI)           | Texte            | « Plan de prévention inondation » (un PPRI prescrit, approuvé ou appliqué par anticipation), « Territoire à risque important (TRI) », les deux, ou « Ni PPRI ni TRI ».                                                      |
+| Installations classées           | Compteur         | Installations classées pour la protection de l'environnement (ICPE) de la commune : usines, carrières, élevages, éoliennes…                                                                                                 |
+| Sites Seveso de la commune       | Compteur         | Parmi elles, les sites Seveso (seuil haut et seuil bas) : ceux qui manipulent des produits dangereux en grande quantité.                                                                                                    |
+| Sites Seveso à moins de 5 km     | Compteur         | Les sites Seveso dans un rayon de 5 km autour du logement, communes voisines comprises. Seulement avec une position.                                                                                                        |
+| Cavités souterraines             | Compteur         | Caves, carrières, puits, galeries… recensés dans la commune.                                                                                                                                                                |
+| Mouvements de terrain            | Compteur         | Glissements, éboulements, effondrements… recensés dans la commune.                                                                                                                                                          |
+| Arrêtés de catastrophe naturelle | Compteur         | Nombre d'arrêtés CatNat reconnus pour la commune depuis 1982.                                                                                                                                                               |
+| Dernière catastrophe naturelle   | Texte            | Le dernier arrêté publié : son libellé au Journal officiel et le premier jour de l'événement (« Inondations et/ou Coulées de Boue, 15/01/2024 »), ou « Aucun arrêté depuis 1982 ».                                          |
+
+Une valeur n'est envoyée que quand elle change, et une fois toutes les 12 heures sinon, pour
+que Gladys n'affiche jamais « Pas de valeur récente ».
+
+Les compteurs sont ceux des bases nationales (BRGM, inspection des installations classées…) :
+un chiffre élevé de cavités dit que la commune a été bien inventoriée autant qu'elle est
+exposée. Regardez-les comme des repères, pas comme une note.
+
+**Changer de commune** (déménagement, nouvelle adresse) crée un nouvel appareil : supprimez
+l'ancien dans Gladys. **Passer d'un code INSEE à une maison ou une adresse** ajoute les
+fonctionnalités des argiles et des sites Seveso proches : l'onglet Découverte propose alors de
+mettre l'appareil à jour.
+
+## Widget
+
+Ajoutez le widget **Géorisques** à un tableau de bord. Il affiche le nom de la commune, puis une
+ligne par risque, en couleurs :
+
+- argiles, radon et séisme : vert quand c'est faible, jaune quand c'est moyen, rouge quand c'est
+  fort (la palette des widgets n'a pas d'orange) ;
+- inondation : vert sans PPRI ni TRI, jaune sinon ;
+- installations classées et sites Seveso proches : jaune quand il y a des sites Seveso ;
+- cavités, mouvements de terrain, arrêtés et dernier arrêté : en gris, pour information.
+
+Il se termine par la source et la date de la lecture, et un bouton **Rapport Géorisques** qui
+ouvre le rapport « Connaître les risques près de chez moi » de votre adresse (ou de votre
+commune) sur georisques.gouv.fr, avec le détail et les cartes.
+
+## Déclencheur de scène
+
+**Nouvel arrêté de catastrophe naturelle** : l'État a reconnu l'état de catastrophe naturelle
+pour votre commune, et Géorisques l'a publié. Géorisques étant lu une fois par jour, la scène part
+dans les 24 heures qui suivent sa publication sur Géorisques.
+
+Filtre (facultatif) : le **type de catastrophe** — inondation, sécheresse (argiles), mouvement
+de terrain, séisme, tempête, avalanche, autre. La sécheresse regroupe les « mouvements de terrain
+différentiels consécutifs à la sécheresse et à la réhydratation des sols » : les fissures dues
+aux argiles.
+
+Variables pour les actions : `kind` (le type en anglais : `flood`, `drought`…), `kind_name` (le
+type dans la langue des réglages), `label` (le libellé du Journal officiel), `event_start` et
+`event_end` (dates de l'événement), `published` (date de publication), `commune`, `insee`,
+`count` (le nombre d'arrêtés depuis 1982).
+
+Le déclencheur ne part pas à la première lecture d'une commune (elle apprend les arrêtés
+existants), ni pour un arrêté publié il y a plus de 180 jours qui apparaîtrait tardivement, et
+au plus cinq fois par lecture.
+
+## Exemples de scènes
+
+- **Prévenir son assureur à temps** : déclencheur « Nouvel arrêté de catastrophe naturelle » →
+  envoyer le message « Catastrophe naturelle reconnue à {{triggerEvent.data.commune}} :
+  {{triggerEvent.data.label}} (du {{triggerEvent.data.event_start}} au
+  {{triggerEvent.data.event_end}}). Si vous avez des dégâts, déclarez-les à votre assureur dans
+  les 30 jours suivant la publication de l'arrêté. »
+- **Maison sur argiles après une sécheresse** : déclencheur « Nouvel arrêté de catastrophe
+  naturelle », type sécheresse → message « Arrêté sécheresse publié : faites le tour de la maison
+  et photographiez les fissures. »
+- **Radon : aérer chaque jour** : déclencheur « Tous les jours à 10 h », condition « Potentiel
+  radon » égal à 3 → message « Pensez à aérer 10 minutes. » Le radon s'accumule dans les pièces
+  fermées, surtout au sous-sol.
+
+## Sources des données, licence et quotas
+
+- **Géorisques** (`www.georisques.gouv.fr/api/v1`), le portail des risques du ministère de la
+  Transition écologique, opéré avec le BRGM. L'API v1 est ouverte, sans compte ni jeton (la v2
+  en demande un). Données publiques réutilisables en citant la source, selon les conditions
+  d'utilisation de georisques.gouv.fr : le widget cite Géorisques et la date de lecture.
+- **Service d'adresses de l'IGN** (Géoplateforme, `data.geopf.fr/geocodage`), qui a pris la
+  suite de l'API Adresse (Base Adresse Nationale) : il donne la commune d'une position ou d'une
+  adresse. Une requête par jour.
+- Aucun quota n'est publié pour l'API v1 de Géorisques. L'intégration reste légère : une
+  lecture par jour, soit environ 14 requêtes espacées de 0,3 seconde, et une nouvelle tentative
+  par heure pour la seule partie qui aurait échoué. Elle se nomme dans ses requêtes. Ne
+  multipliez pas les « Lire maintenant ».
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Indiquez la position de votre maison »** : donnez une position à votre maison dans Gladys
+  (Paramètres, Maisons), ou choisissez « Une adresse » ou « Une commune ».
+- **« Adresse introuvable »** : vérifiez l'adresse (numéro, rue, commune) ou passez par le code
+  INSEE.
+- **« … n'est pas un code INSEE »** : le code INSEE a 5 caractères et n'est pas le code postal
+  (Toulouse : code postal 31000, code INSEE 31555).
+- **« Géorisques ne répond pas »** : le service est en panne ou Gladys n'a pas accès à Internet.
+  L'intégration réessaie toutes les heures ; les dernières valeurs restent affichées.
+- **« Géorisques n'a pas répondu pour : radon… »** : une partie seulement a échoué ; elle est
+  redemandée dans l'heure, seule.
+- **Pas de potentiel radon** : Géorisques n'en publie pas pour cette commune ; à Paris, Lyon et
+  Marseille, il est publié par arrondissement : choisissez une maison ou une adresse plutôt que
+  le code INSEE de la commune.
+- **Pas de fonctionnalité « Retrait-gonflement des argiles »** : l'appareil a été créé avec un
+  code INSEE. Passez à une maison ou une adresse, puis mettez l'appareil à jour dans l'onglet
+  Découverte.
+- **Journaux** : calmes par défaut (démarrage, changement de commune, nouvel arrêté, « Lire
+  maintenant », pannes une seule fois). `LOG_LEVEL=debug` montre chaque lecture. Ni la position
+  ni l'adresse n'y sont jamais écrites.
+
+## Limites
+
+- **Pas un système d'alerte de sécurité** et **pas un état des risques officiel** : pour une
+  vente ou une location, l'état des risques se fait sur georisques.gouv.fr.
+- À part les argiles et les sites Seveso proches, les informations sont **celles de la
+  commune**, pas de votre parcelle : un PPRI dans la commune ne dit pas que votre rue est en
+  zone inondable. Le rapport Géorisques de votre adresse (bouton du widget) donne le détail.
+- L'exposition aux argiles vient d'une carte nationale au 1/50 000 : elle dit une tendance du
+  sol, pas l'état de votre terrain.
+- Les données suivent les mises à jour de Géorisques : un nouvel arrêté y arrive quelques jours
+  à quelques semaines après sa publication au Journal officiel.
+- Les zones sismiques et les catégories radon sont réglementaires ; elles changent rarement.
+- Développée sans connexion réelle à Géorisques : les formats ont été pris dans la documentation
+  officielle de l'API ; quelques détails (format des dates, taille des pages) seront confirmés
+  par les premiers utilisateurs.
+- Non affiliée au ministère de la Transition écologique, au BRGM ni à l'IGN.

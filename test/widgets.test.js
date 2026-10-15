@@ -1,77 +1,119 @@
+// -----------------------------------------------------------------------------
+// The `risks` widget: in every language and every state, the content passes
+// the core's budget (validateWidgetContent, empty array = rendered as sent),
+// the colours follow the levels, and the button opens the Géorisques report.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { buildDiscoveredDevices } from '../src/devices/index.js';
-import { simulateLanSession } from '../src/devices/plug.js';
-import { DEMO_STATUS_WIDGET, WIDGETS, refreshWidgets } from '../src/widgets.js';
-import { normalizeConfig } from '../src/config.js';
+import { WIDGET_COLORS, validateWidgetContent } from '@gladysassistant/integration-sdk';
+import { LANGUAGES } from '../src/config.js';
+import { WIDGET_KEY } from '../src/monitor.js';
+import { statusItems } from '../src/widgets.js';
+import { CHEVILLY, createApi, createWorld } from './helpers/world.js';
 
-const gladys = createFakeGladys();
-const config = normalizeConfig();
-const demoStatus = WIDGETS[DEMO_STATUS_WIDGET];
+async function content(world, language = 'fr') {
+  const ack = await world.fake.widgetGet(WIDGET_KEY, { language });
+  assert.equal(ack.success, true, ack.error);
+  return ack.data.content;
+}
 
-// What the SDK passes to onWidgetGet, plus the config index.js adds.
-const getContent = (cfg = config) =>
-  demoStatus.get(gladys, { settings: {}, language: 'en', units: 'metric', config: cfg });
+const status = (widget) => widget.components.find((c) => c.type === 'status');
 
-test('the demo_status content is rendered exactly as sent', async () => {
-  // [] = nothing the core would drop, truncate or trim to the content budget.
-  assert.deepEqual(validateWidgetContent(await getContent()), []);
-});
-
-test('the degraded plug connection content is valid too', async () => {
-  simulateLanSession(false);
-  try {
-    const content = await getContent();
-    assert.deepEqual(validateWidgetContent(content), []);
-    const status = content.components.find((component) => component.type === 'status');
-    assert.ok(
-      status.items.some((item) => item.color === 'warning'),
-      'degraded shows a warning',
-    );
-  } finally {
-    simulateLanSession(true);
+test('the overview fits the budget in every language, ten lines with a position', async (t) => {
+  const world = await createWorld();
+  t.after(() => world.app.stop());
+  for (const language of [...LANGUAGES, 'it']) {
+    const widget = await content(world, language);
+    assert.deepEqual(validateWidgetContent(widget), [], language);
+    assert.equal(widget.components.length, 4);
+    assert.equal(status(widget).items.length, 10);
+    for (const item of status(widget).items) {
+      assert.ok(item.value.length <= 40 && item.label.length <= 40, JSON.stringify(item));
+    }
   }
-});
-
-test('the live tiles reference features the integration publishes', async () => {
-  const featureIds = new Set(
-    buildDiscoveredDevices(gladys, config).flatMap((device) =>
-      device.features.map((feature) => feature.external_id),
-    ),
+  const widget = await content(world, 'fr');
+  assert.deepEqual(widget.components[0], {
+    type: 'text',
+    variant: 'heading',
+    text: 'Chevilly-Larue (94021)',
+  });
+  assert.deepEqual(
+    status(widget).items.map((item) => [item.label, item.value, item.color]),
+    [
+      ['Argiles', 'Forte', 'danger'],
+      ['Radon', 'Catégorie 1, faible', 'success'],
+      ['Séisme', 'Zone 1, très faible', 'success'],
+      ['Inondation', 'Plan de prévention inondation', 'warning'],
+      ['Installations classées', '7, dont 1 Seveso', 'warning'],
+      ['Seveso à moins de 5 km', '2', 'warning'],
+      ['Cavités', '3', 'neutral'],
+      ['Mouvements de terrain', '1', 'neutral'],
+      ['Arrêtés CatNat', '6 depuis 1982', 'neutral'],
+      ['Dernier', 'Sécheresse, 01/07/2022', 'neutral'],
+    ],
   );
-  const liveTiles = (await getContent()).components.filter((c) => c.device_feature);
-  assert.ok(liveTiles.length > 0, 'the template demonstrates a device-bound tile');
-  for (const tile of liveTiles) {
-    assert.ok(featureIds.has(tile.device_feature), `unknown feature ${tile.device_feature}`);
-  }
+  assert.equal(widget.components[2].text, 'Source : Géorisques · 15/10/2026');
+  const button = widget.components[3];
+  assert.equal(button.type, 'button');
+  const url = new URL(button.link.url);
+  assert.equal(url.origin, 'https://www.georisques.gouv.fr');
+  assert.equal(url.searchParams.get('codeInsee'), CHEVILLY);
+  assert.equal(url.searchParams.get('typeForm'), 'adresse');
 });
 
-test('every button action of the content is handled and answers a short toast', async () => {
-  const buttons = (await getContent()).components.filter((c) => c.type === 'button' && c.action);
-  assert.ok(buttons.length > 0, 'the template demonstrates a widget action');
-  for (const { action } of buttons) {
-    const message = await demoStatus.action(gladys, {
-      actionKey: action.key,
-      params: action.params ?? {},
-      settings: {},
-      config,
-    });
-    assert.ok(message.en, 'the toast carries at least the mandatory `en` text');
-    assert.ok(message.en.length <= 200, 'toasts are capped at 200 characters');
-  }
-});
-
-test('an unknown widget action fails, so the user sees the error', async () => {
-  await assert.rejects(
-    demoStatus.action(gladys, { actionKey: 'unknown', params: {}, settings: {}, config }),
-    /Unknown widget action/,
+test('the colours follow the levels, a commune without position has no clay line', () => {
+  const { SUCCESS, WARNING, DANGER, NEUTRAL } = WIDGET_COLORS;
+  const parts = {
+    clay: { level: 2 },
+    radon: { category: 3 },
+    seismic: { zone: 4 },
+    flood: { ppri: false, tri: false },
+    installations: { total: 0, seveso: 0 },
+    catnat: { count: 0, decrees: [] },
+  };
+  const items = statusItems(parts, true, 'en');
+  assert.deepEqual(
+    items.map((item) => [item.label, item.value, item.color]),
+    [
+      ['Clay', 'Medium', WARNING],
+      ['Radon', 'Category 3, significant', DANGER],
+      ['Earthquake', 'Zone 4, medium', DANGER],
+      ['Flooding', 'Neither PPRI nor TRI', SUCCESS],
+      ['Classified sites', '0', NEUTRAL],
+      ['Disaster decrees', '0 since 1982', NEUTRAL],
+      ['Latest', 'No decree since 1982', NEUTRAL],
+    ],
   );
+  const commune = statusItems(parts, false, 'de');
+  assert.equal(commune[0].label, 'Radon');
+  assert.equal(commune[0].value, 'Kategorie 3, erheblich');
+  // Unknown values say so, in grey.
+  assert.deepEqual(statusItems({}, true, 'es').slice(0, 3), [
+    { label: 'Arcillas', value: 'Desconocido', icon: 'layers', color: NEUTRAL },
+    { label: 'Radón', value: 'Desconocido', icon: 'wind', color: NEUTRAL },
+    { label: 'Sismo', value: 'Desconocido', icon: 'activity', color: NEUTRAL },
+  ]);
 });
 
-test('refreshWidgets nudges every widget', () => {
-  const fresh = createFakeGladys();
-  refreshWidgets(fresh);
-  assert.deepEqual(fresh.fake.widgetRefreshes, Object.keys(WIDGETS));
+test('without a location the widget says what to do', async (t) => {
+  const world = await createWorld({ houses: [] });
+  t.after(() => world.app.stop());
+  const widget = await content(world, 'en');
+  assert.deepEqual(validateWidgetContent(widget), []);
+  assert.equal(widget.components.length, 1);
+  assert.match(widget.components[0].text, /Give your house a location in Gladys/);
+});
+
+test('before the first answer of Géorisques: a waiting text and the report link', async (t) => {
+  const api = createApi();
+  api.down.georisques = 503;
+  const world = await createWorld({ api, config: { position: 'commune', commune: '31555' } });
+  t.after(() => world.app.stop());
+  const widget = await content(world, 'es');
+  assert.deepEqual(validateWidgetContent(widget), []);
+  assert.equal(widget.components[0].text, 'Esperando la primera respuesta de Géorisques.');
+  const url = new URL(widget.components[1].link.url);
+  assert.equal(url.searchParams.get('typeForm'), 'commune');
+  assert.equal(url.searchParams.get('codeInsee'), '31555');
 });

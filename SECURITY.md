@@ -30,6 +30,19 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration handles:
+
+- **Stored in `/data`** (`/data/georisques.json`): the last report read from Géorisques (INSEE
+  code and name of the commune, the values, when they were read) and the identifiers of the
+  natural disaster decrees already seen. No secret, no account, no token: the services need
+  none. The **position of the house** is read from Gladys (manifest `location: true`) and the
+  **address** typed in the configuration is geocoded; neither is stored nor logged.
+- **Network**: HTTPS GET requests to two public services only, `www.georisques.gouv.fr` (the
+  risks: INSEE code of the commune, and the position of the home for the clay exposure and the
+  Seveso sites within 5 km) and `data.geopf.fr` (address service of IGN: the position of the
+  house, or the address typed, to find the commune), about once a day. Nothing listens on the
+  network.
+
 Out of scope: Gladys Assistant itself (see its
-[security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+[security policy](https://github.com/GladysAssistant/Gladys/security/policy)), and the
+Géorisques and Géoplateforme services.
