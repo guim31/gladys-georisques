@@ -1,45 +1,66 @@
 // -----------------------------------------------------------------------------
-// Integration configuration.
-//
-// The configuration is filled in by the user in Gladys, from the `config_schema`
-// declared in `gladys-assistant-integration.json`. The SDK fetches it for you
-// (`gladys.getConfig()`) and notifies you of every change through
-// `gladys.onConfigUpdated()`.
-//
-// This module only provides defaults and normalizes the received object, so the
-// rest of the code never has to deal with `undefined`.
+// Integration configuration: defaults (they mirror the `default` values of the
+// manifest `config_schema`, see test/manifest.test.js) and normalization, so
+// the rest of the code never deals with strings, blanks or `undefined`.
 // -----------------------------------------------------------------------------
 
-// Defaults: they MUST stay consistent with the `default` values declared in the
-// `config_schema` of the manifest.
+export const LANGUAGES = ['en', 'fr', 'de', 'es'];
+
+// Where the risks are read: the location of a house of Gladys, a postal
+// address, or a commune by its INSEE code.
+export const POSITIONS = ['house', 'address', 'commune'];
+
 export const DEFAULT_CONFIG = {
-  latitude: 48.8566, // Paris
-  longitude: 2.3522,
-  unit: 'celsius', // 'celsius' | 'fahrenheit'
-  // Seconds between two reads of the polled sensors. Gladys polls at most once
-  // a minute: slower intervals are applied by skipping polls (see
-  // createPoller in src/devices/index.js).
-  poll_frequency: 300,
-  // Reserved key (NOT in config_schema): because the manifest declares both
-  // 'local' and 'cloud' in its `transports` field, Gladys shows a standard
-  // "Prefer the local connection" toggle and sends the user's choice here.
-  // Read-only for the integration; defaults to true.
-  GLADYS_PREFER_LOCAL: true,
+  position: 'house',
+  // A `source: "houses"` select takes no default (store rule): empty = the
+  // first house of Gladys that has a location.
+  house: '',
+  address: '',
+  commune: '',
+  language: 'fr',
 };
 
+// INSEE code of a commune: 5 digits, or 2A/2B and 3 digits in Corsica.
+const COMMUNE_CODE = /^(?:\d{5}|2[AB]\d{3})$/;
+
+export const isCommuneCode = (value) => COMMUNE_CODE.test(String(value ?? '').toUpperCase());
+
 /**
- * Merge the user config with the defaults.
- * @param {Record<string, unknown>} raw config returned by the SDK
+ * The commune of a municipal district: the address services give Paris, Lyon
+ * and Marseille addresses the code of their arrondissement (75112, 69382,
+ * 13208), while Géorisques files the catastrophe decrees, plans and sites under
+ * the commune (75056, 69123, 13055).
+ */
+export function communeOfDistrict(code) {
+  const value = String(code ?? '').toUpperCase();
+  if (/^751(0[1-9]|1\d|20)$/.test(value)) {
+    return '75056';
+  }
+  if (/^6938[1-9]$/.test(value)) {
+    return '69123';
+  }
+  if (/^132(0[1-9]|1[0-6])$/.test(value)) {
+    return '13055';
+  }
+  return value;
+}
+
+const text = (value) => (typeof value === 'string' ? value.trim() : '');
+
+/**
+ * @param {Record<string, unknown>} raw the configuration returned by the SDK
  */
 export function normalizeConfig(raw = {}) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const commune = text(source.commune).toUpperCase();
   return {
-    ...DEFAULT_CONFIG,
-    ...raw,
-    // Force the types: config may arrive as strings from a form.
-    latitude: Number(raw.latitude ?? DEFAULT_CONFIG.latitude),
-    longitude: Number(raw.longitude ?? DEFAULT_CONFIG.longitude),
-    poll_frequency: Number(raw.poll_frequency ?? DEFAULT_CONFIG.poll_frequency),
-    // The preference is a boolean; anything but an explicit false means true.
-    GLADYS_PREFER_LOCAL: raw.GLADYS_PREFER_LOCAL !== false,
+    position: POSITIONS.includes(source.position) ? source.position : DEFAULT_CONFIG.position,
+    // The selector of the chosen house (source: "houses"), null = the first located one.
+    houseSelector: text(source.house) || null,
+    address: text(source.address).slice(0, 200),
+    // A valid INSEE code, or null; `communeInvalid` keeps what was typed otherwise.
+    communeCode: isCommuneCode(commune) ? commune : null,
+    communeInvalid: commune !== '' && !isCommuneCode(commune) ? text(source.commune) : null,
+    language: LANGUAGES.includes(source.language) ? source.language : DEFAULT_CONFIG.language,
   };
 }

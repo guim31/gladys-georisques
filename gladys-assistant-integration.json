@@ -1,177 +1,474 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Géorisques",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Natural and industrial risks of your commune in France, from the open Géorisques data.",
+    "fr": "Risques naturels et technologiques de votre commune, d'après les données ouvertes Géorisques.",
+    "de": "Natur- und Industrierisiken deiner Gemeinde in Frankreich, aus den offenen Daten von Géorisques.",
+    "es": "Riesgos naturales e industriales de su municipio en Francia, según los datos abiertos Géorisques."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "docker_image": "ghcr.io/guim31/gladys-georisques:1.0.0",
+  "gladys_version": ">=5.2.0",
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-georisques/main/cover.png",
+  "categories": ["environment"],
+  "transports": ["cloud"],
+  "location": true,
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your home",
+        "fr": "Votre logement",
+        "de": "Dein Zuhause",
+        "es": "Su vivienda"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Choose where the risks are read: your house in Gladys (default), an address, or a commune by its INSEE code. Save, then create the device in the Discover tab. Géorisques is read once a day.",
+        "fr": "Choisissez où lire les risques : votre maison dans Gladys (par défaut), une adresse, ou une commune par son code INSEE. Enregistrez, puis créez l'appareil dans l'onglet Découverte. Géorisques est lu une fois par jour.",
+        "de": "Wähle, wo die Risiken gelesen werden: dein Haus in Gladys (Standard), eine Adresse oder eine Gemeinde per INSEE-Code. Speichere und lege dann das Gerät im Tab „Entdecken“ an. Géorisques wird einmal am Tag gelesen.",
+        "es": "Elija dónde se leen los riesgos: su casa en Gladys (por defecto), una dirección o un municipio por su código INSEE. Guarde y cree el dispositivo en la pestaña Descubrir. Géorisques se lee una vez al día."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-georisques/blob/main/docs/fr.md",
+          "label": {
+            "en": "Setup guide",
+            "fr": "Guide d'installation",
+            "de": "Installationsanleitung",
+            "es": "Guía de instalación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "about",
+      "type": "section",
+      "label": {
+        "en": "Sources and limits",
+        "fr": "Sources et limites",
+        "de": "Quellen und Grenzen",
+        "es": "Fuentes y límites"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
       "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+        "en": "Data © Géorisques (French Ministry of Ecological Transition), read without an account. For information: it is not a safety alert system and does not replace the official risk report. Not affiliated with the French Ministry.",
+        "fr": "Données © Géorisques (ministère de la Transition écologique), lues sans compte. Pour information : ce n'est pas un système d'alerte de sécurité et cela ne remplace pas l'état des risques officiel. Non affiliée au ministère.",
+        "de": "Daten © Géorisques (französisches Ministerium für den ökologischen Wandel), ohne Konto gelesen. Zur Information: kein Sicherheitswarnsystem, ersetzt nicht den amtlichen Risikobericht. Nicht mit dem Ministerium verbunden.",
+        "es": "Datos © Géorisques (Ministerio francés de Transición Ecológica), leídos sin cuenta. A título informativo: no es un sistema de alerta de seguridad ni sustituye al informe oficial de riesgos. Sin afiliación con el Ministerio."
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+      "links": [
+        {
+          "url": "https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi",
+          "label": {
+            "en": "Géorisques website",
+            "fr": "Site Géorisques",
+            "de": "Website von Géorisques",
+            "es": "Sitio web de Géorisques"
+          }
+        },
+        {
+          "url": "https://www.georisques.gouv.fr/doc-api",
+          "label": {
+            "en": "Géorisques API",
+            "fr": "API Géorisques",
+            "de": "Géorisques-API",
+            "es": "API de Géorisques"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "position",
+      "type": "select",
+      "label": {
+        "en": "Location",
+        "fr": "Position",
+        "de": "Standort",
+        "es": "Ubicación"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "House: the location of your house in Gladys. Address: the address below. Commune: the INSEE code below (no clay exposure nor nearby Seveso sites, which need a position).",
+        "fr": "Maison : la position de votre maison dans Gladys. Adresse : l'adresse ci-dessous. Commune : le code INSEE ci-dessous (sans argiles ni sites Seveso proches, qui demandent une position).",
+        "de": "Haus: der Standort deines Hauses in Gladys. Adresse: die Adresse unten. Gemeinde: der INSEE-Code unten (ohne Ton und nahe Seveso-Betriebe, die einen Standort brauchen).",
+        "es": "Casa: la ubicación de su casa en Gladys. Dirección: la dirección de abajo. Municipio: el código INSEE de abajo (sin arcillas ni sitios Seveso cercanos, que requieren una ubicación)."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "house",
+      "options": [
+        {
+          "value": "house",
+          "label": {
+            "en": "My house in Gladys",
+            "fr": "Ma maison dans Gladys",
+            "de": "Mein Haus in Gladys",
+            "es": "Mi casa en Gladys"
+          }
+        },
+        {
+          "value": "address",
+          "label": {
+            "en": "An address",
+            "fr": "Une adresse",
+            "de": "Eine Adresse",
+            "es": "Una dirección"
+          }
+        },
+        {
+          "value": "commune",
+          "label": {
+            "en": "A commune (INSEE code)",
+            "fr": "Une commune (code INSEE)",
+            "de": "Eine Gemeinde (INSEE-Code)",
+            "es": "Un municipio (código INSEE)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "house",
+      "type": "select",
+      "source": "houses",
+      "label": {
+        "en": "House",
+        "fr": "Maison",
+        "de": "Haus",
+        "es": "Casa"
+      },
+      "description": {
+        "en": "Empty: the first house of Gladys that has a location.",
+        "fr": "Vide : la première maison de Gladys qui a une position.",
+        "de": "Leer: das erste Haus in Gladys mit einem Standort.",
+        "es": "Vacío: la primera casa de Gladys que tiene ubicación."
+      },
+      "required": false
+    },
+    {
+      "key": "address",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
+      },
+      "description": {
+        "en": "Number, street and commune, as on a letter. Used when Location is \"An address\".",
+        "fr": "Numéro, rue et commune, comme sur une lettre. Utilisée quand Position vaut « Une adresse ».",
+        "de": "Hausnummer, Straße und Gemeinde, wie auf einem Brief. Gilt, wenn Standort „Eine Adresse“ ist.",
+        "es": "Número, calle y municipio, como en una carta. Se usa cuando Ubicación es «Una dirección»."
+      },
+      "placeholder": {
+        "en": "e.g. 1 place du Capitole, Toulouse",
+        "fr": "ex. 1 place du Capitole, Toulouse",
+        "de": "z. B. 1 place du Capitole, Toulouse",
+        "es": "p. ej. 1 place du Capitole, Toulouse"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "commune",
+      "type": "string",
+      "label": {
+        "en": "INSEE code of the commune",
+        "fr": "Code INSEE de la commune",
+        "de": "INSEE-Code der Gemeinde",
+        "es": "Código INSEE del municipio"
+      },
+      "description": {
+        "en": "5 characters, not the postcode: 31555 for Toulouse, 2A004 for Ajaccio. Used when Location is \"A commune\".",
+        "fr": "5 caractères, pas le code postal : 31555 pour Toulouse, 2A004 pour Ajaccio. Utilisé quand Position vaut « Une commune ».",
+        "de": "5 Zeichen, nicht die Postleitzahl: 31555 für Toulouse, 2A004 für Ajaccio. Gilt, wenn Standort „Eine Gemeinde“ ist.",
+        "es": "5 caracteres, no el código postal: 31555 para Toulouse, 2A004 para Ajaccio. Se usa cuando Ubicación es «Un municipio»."
+      },
+      "placeholder": {
+        "en": "e.g. 31555",
+        "fr": "ex. 31555",
+        "de": "z. B. 31555",
+        "es": "p. ej. 31555"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de las funciones"
+      },
+      "description": {
+        "en": "Names given to the features of a new device (Radon potential…) and language of its texts (flooding, latest disaster, trigger variables).",
+        "fr": "Noms donnés aux fonctionnalités d'un nouvel appareil (Potentiel radon…) et langue de ses textes (inondation, dernière catastrophe, variables du déclencheur).",
+        "de": "Namen der Funktionen eines neuen Geräts (Radonpotenzial…) und Sprache seiner Texte (Hochwasser, letzte Katastrophe, Variablen des Auslösers).",
+        "es": "Nombres de las funciones de un nuevo dispositivo (Potencial de radón…) e idioma de sus textos (inundación, última catástrofe, variables del disparador)."
+      },
+      "required": false,
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "read_now",
+      "label": {
+        "en": "Read now",
+        "fr": "Lire maintenant",
+        "de": "Jetzt lesen",
+        "es": "Leer ahora"
+      },
+      "description": {
+        "en": "Reads Géorisques again for your commune and says what was found, to check the configuration.",
+        "fr": "Relit Géorisques pour votre commune et dit ce qui a été trouvé, pour vérifier la configuration.",
+        "de": "Liest Géorisques für deine Gemeinde erneut und sagt, was gefunden wurde, um die Konfiguration zu prüfen.",
+        "es": "Vuelve a leer Géorisques para su municipio e indica lo encontrado, para comprobar la configuración."
+      },
+      "timeout_seconds": 60
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "catnat_decree",
+      "label": {
+        "en": "New natural disaster decree",
+        "fr": "Nouvel arrêté de catastrophe naturelle",
+        "de": "Neuer Naturkatastrophen-Erlass",
+        "es": "Nuevo decreto de catástrofe natural"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "The State recognised a natural disaster in your commune (decree published in the Journal officiel). Géorisques is read once a day.",
+        "fr": "L'État a reconnu une catastrophe naturelle dans votre commune (arrêté publié au Journal officiel). Géorisques est lu une fois par jour.",
+        "de": "Der Staat hat in deiner Gemeinde eine Naturkatastrophe anerkannt (Erlass im Journal officiel). Géorisques wird einmal am Tag gelesen.",
+        "es": "El Estado ha reconocido una catástrofe natural en su municipio (decreto publicado en el Journal officiel). Géorisques se lee una vez al día."
       },
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
+          "key": "kind",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": {
+            "en": "Kind of disaster",
+            "fr": "Type de catastrophe",
+            "de": "Art der Katastrophe",
+            "es": "Tipo de catástrofe"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "flood",
+              "label": {
+                "en": "Flood",
+                "fr": "Inondation",
+                "de": "Hochwasser",
+                "es": "Inundación"
+              }
+            },
+            {
+              "value": "drought",
+              "label": {
+                "en": "Drought (clay)",
+                "fr": "Sécheresse (argiles)",
+                "de": "Dürre (Ton)",
+                "es": "Sequía (arcillas)"
+              }
+            },
+            {
+              "value": "ground_movement",
+              "label": {
+                "en": "Ground movement",
+                "fr": "Mouvement de terrain",
+                "de": "Bodenbewegung",
+                "es": "Movimiento de terreno"
+              }
+            },
+            {
+              "value": "earthquake",
+              "label": {
+                "en": "Earthquake",
+                "fr": "Séisme",
+                "de": "Erdbeben",
+                "es": "Terremoto"
+              }
+            },
+            {
+              "value": "storm",
+              "label": {
+                "en": "Storm",
+                "fr": "Tempête",
+                "de": "Sturm",
+                "es": "Tormenta"
+              }
+            },
+            {
+              "value": "avalanche",
+              "label": {
+                "en": "Avalanche",
+                "fr": "Avalanche",
+                "de": "Lawine",
+                "es": "Alud"
+              }
+            },
+            {
+              "value": "other",
+              "label": {
+                "en": "Other",
+                "fr": "Autre",
+                "de": "Sonstiges",
+                "es": "Otro"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "kind",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
-        }
-      ]
-    }
-  ],
-  "scene_actions": [
-    {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
-      },
-      "timeout_seconds": 15,
-      "fields": [
+          "label": {
+            "en": "Kind (flood, drought…)",
+            "fr": "Type (flood, drought…)",
+            "de": "Art (flood, drought…)",
+            "es": "Tipo (flood, drought…)"
+          }
+        },
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
-      "outputs": [
+          "key": "kind_name",
+          "type": "string",
+          "label": {
+            "en": "Kind, in words",
+            "fr": "Type, en toutes lettres",
+            "de": "Art, ausgeschrieben",
+            "es": "Tipo, en palabras"
+          }
+        },
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "label",
+          "type": "string",
+          "label": {
+            "en": "Label of the Journal officiel",
+            "fr": "Libellé du Journal officiel",
+            "de": "Bezeichnung im Journal officiel",
+            "es": "Texto del Journal officiel"
+          }
+        },
+        {
+          "key": "event_start",
+          "type": "string",
+          "label": {
+            "en": "Start of the event",
+            "fr": "Début de l'événement",
+            "de": "Beginn des Ereignisses",
+            "es": "Inicio del suceso"
+          }
+        },
+        {
+          "key": "event_end",
+          "type": "string",
+          "label": {
+            "en": "End of the event",
+            "fr": "Fin de l'événement",
+            "de": "Ende des Ereignisses",
+            "es": "Fin del suceso"
+          }
+        },
+        {
+          "key": "published",
+          "type": "string",
+          "label": {
+            "en": "Publication date",
+            "fr": "Date de publication",
+            "de": "Veröffentlichungsdatum",
+            "es": "Fecha de publicación"
+          }
+        },
+        {
+          "key": "commune",
+          "type": "string",
+          "label": {
+            "en": "Commune",
+            "fr": "Commune",
+            "de": "Gemeinde",
+            "es": "Municipio"
+          }
+        },
+        {
+          "key": "insee",
+          "type": "string",
+          "label": {
+            "en": "INSEE code",
+            "fr": "Code INSEE",
+            "de": "INSEE-Code",
+            "es": "Código INSEE"
+          }
+        },
+        {
+          "key": "count",
+          "type": "number",
+          "label": {
+            "en": "Decrees since 1982",
+            "fr": "Arrêtés depuis 1982",
+            "de": "Erlasse seit 1982",
+            "es": "Decretos desde 1982"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "risks",
+      "label": {
+        "en": "Géorisques",
+        "fr": "Géorisques",
+        "de": "Géorisques",
+        "es": "Géorisques"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Risks of your commune at a glance: clay, radon, earthquake, flooding, sites, disasters.",
+        "fr": "Les risques de votre commune d'un coup d'œil : argiles, radon, séisme, inondation, sites, CatNat.",
+        "de": "Die Risiken deiner Gemeinde auf einen Blick: Ton, Radon, Erdbeben, Hochwasser, Anlagen.",
+        "es": "Los riesgos de su municipio de un vistazo: arcillas, radón, sismo, inundación, sitios."
+      },
+      "icon": "shield"
     }
   ]
 }

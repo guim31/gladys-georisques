@@ -1,0 +1,16 @@
+{
+  "results": 1,
+  "page": 1,
+  "total_pages": 1,
+  "data": [
+    {
+      "code_insee": "94021",
+      "libelle_commune": "Chevilly-Larue",
+      "classe_potentiel": "1"
+    }
+  ],
+  "response_code": 200,
+  "message": "",
+  "next": null,
+  "previous": null
+}
