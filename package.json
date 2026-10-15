@@ -1,6 +1,6 @@
 {
   "name": "gladys-georisques",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Natural and industrial risks of your commune in France, from the open Géorisques data, in Gladys Assistant.",
   "type": "module",

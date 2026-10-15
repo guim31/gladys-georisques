@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-15
+
 ### Added
 
 - A "Risks in my commune" device, from the open Géorisques data: clay
@@ -26,4 +28,5 @@ the notes of the version's GitHub Release.
 - Feature names and texts in English, French, German and Spanish, and the
   documentation in the four languages.
 
-[Unreleased]: https://github.com/guim31/gladys-georisques/commits/main
+[Unreleased]: https://github.com/guim31/gladys-georisques/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-georisques/releases/tag/v1.0.1
