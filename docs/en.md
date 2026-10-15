@@ -1,61 +1,198 @@
-# Demo Devices Template
+# Géorisques
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Brings into Gladys the **natural and technological risks of your commune** in France, as
+published by Géorisques (the "Know the risks near me" service of the French Ministry of
+Ecological Transition): clay shrink-swell, radon, earthquake, flooding, classified industrial
+sites, underground cavities, ground movements and natural disaster decrees. No account, no key.
+
+> **This is information, not a safety alert system.** The data comes from Géorisques, with its
+> update delays and its possible errors. The integration replaces neither the official risk
+> statement (mandatory when selling or renting a home in France) nor the instructions of your
+> town hall or prefecture. This integration is not affiliated with the French Ministry of
+> Ecological Transition nor with the French State.
+>
+> Developed without a live connection to Géorisques: feedback welcome. The service could not be
+> reached from the development environment; the integration was tested on answers rebuilt from
+> the official API documentation.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+- **A "Risks in my commune" device** showing at a glance: the exposure of your home to **clay
+  shrink-swell**, the **radon potential** of the commune, its **seismic zone**, whether it has a
+  **flood prevention plan** (PPRI) or belongs to a **territory at high flood risk** (TRI), the
+  number of **classified industrial sites** and **Seveso sites** (in the commune and within 5 km
+  of your home), of **underground cavities** and **ground movements** recorded, and the
+  **natural disaster decrees** ("arrêtés CatNat") recognised since 1982, with the latest one
+  (its kind and date).
+- A **scene trigger** "New natural disaster decree": the event that matters for your home
+  insurance.
+- A **dashboard widget** summing all of this up in colours, with a link to the Géorisques report
+  of your address.
+- A **"Read now"** button in the configuration, to check that the right commune is found.
+
+This data rarely changes: the integration reads Géorisques **once a day**, at startup and when
+you save the configuration. No flood of requests.
+
+## Requirements
+
+- Gladys Assistant **5.2.0** or later.
+- Internet access from Gladys: the integration reads `www.georisques.gouv.fr` and, to find the
+  commune of a house or of an address, the address service of IGN (`data.geopf.fr`).
+- A home **in France**: mainland, or overseas for the data Géorisques publishes there.
+- For the default option, the **location of your house** in Gladys (Settings, Houses). The
+  integration asks for it at install time ("location" permission). It is only used to find the
+  commune and the clay exposure; it is neither stored nor written to the logs.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+### Settings
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+| Setting                       | What it does                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Location                      | **My house in Gladys** (default), **An address** or **A commune (INSEE code)**.                                                                               |
+| House                         | The house whose location counts, if you have several. Empty: the first house of Gladys that has a location.                                                   |
+| Address                       | Number, street and commune, as on an envelope: `12 rue de la Mairie, 31000 Toulouse`. A commune name alone works too, without a precise position (see below). |
+| INSEE code of the commune     | 5 characters, **not the postcode**: `31555` for Toulouse, `2A004` for Ajaccio. It is on your property tax notice or on the Insee website.                     |
+| Language of the feature names | Names of the features of the new device, language of its texts (flooding, latest disaster) and of the trigger variables. French by default.                   |
 
-## Actions
+Save, then open the **Discover** tab and create the device.
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+**With a position** (house or precise address), you get everything. **With an INSEE code**, or
+an address reduced to a commune name, the device has neither the clay exposure nor the Seveso
+sites within 5 km: both depend on the exact place of the home, not on the commune.
 
-## Scenes
+In Paris, Lyon and Marseille, the device is the one of the commune (75056, 69123, 13055), where
+Géorisques files the decrees and plans; the radon is read for your arrondissement when the
+position or the address gives it.
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+### Check it: "Read now"
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+The **Read now** button reads Géorisques again and answers, for example: "Chevilly-Larue
+(94021): read now. 6 natural disaster decree(s) since 1982." If the commune is wrong, fix the
+location or the address. If something is missing (house without location, address not found,
+invalid INSEE code), the message and the configuration screen say so.
 
-## Dashboard
+## Device
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+One device per commune, named "Risks in my commune (Toulouse)". Its features are read-only:
+
+| Feature                     | Type (Gladys) | Value                                                                                                                                                                              |
+| --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clay shrink-swell           | Risk level    | Exposure **at the place of the home**: 0 none (green, "No risk"), 1 low (yellow), 2 medium (orange), 3 high (red). Clay that swells in winter and shrinks in summer cracks houses. |
+| Radon potential             | Risk level    | Category of the commune: 1 low (yellow), 2 low but with factors easing the way of radon (orange), 3 significant (red). In category 3, buyers and tenants must be informed.         |
+| Seismic zone                | Sismic value  | Regulatory zone from 1 (very low) to 5 (high, French West Indies). The official number, untransformed.                                                                             |
+| Flooding (PPRI, TRI)        | Text          | "Flood prevention plan (PPRI)" (prescribed, approved or applied in advance), "High flood risk territory (TRI)", both, or "Neither PPRI nor TRI".                                   |
+| Classified industrial sites | Counter       | Installations classified for the protection of the environment (ICPE) in the commune: factories, quarries, farms, wind turbines…                                                   |
+| Seveso sites in the commune | Counter       | Among them, the Seveso sites (upper and lower tier): those handling large amounts of dangerous substances.                                                                         |
+| Seveso sites within 5 km    | Counter       | The Seveso sites within 5 km of the home, neighbouring communes included. Only with a position.                                                                                    |
+| Underground cavities        | Counter       | Cellars, quarries, wells, tunnels… recorded in the commune.                                                                                                                        |
+| Ground movements            | Counter       | Landslides, rockfalls, collapses… recorded in the commune.                                                                                                                         |
+| Natural disaster decrees    | Counter       | Number of "CatNat" decrees recognised for the commune since 1982.                                                                                                                  |
+| Latest natural disaster     | Text          | The latest decree published: its kind and the first day of the event ("Flood, 15/01/2024"), or "No decree since 1982". In French, the label of the Journal officiel.               |
+
+A value is only sent when it changes, and once every 12 hours otherwise, so that Gladys never
+shows "No recent value".
+
+The counters are those of the national databases (BRGM, inspection of classified sites…): a high
+number of cavities says the commune was well surveyed as much as it is exposed. Read them as
+landmarks, not as a score.
+
+**Changing commune** (moving house, new address) creates a new device: delete the old one in
+Gladys. **Going from an INSEE code to a house or an address** adds the clay and nearby Seveso
+features: the Discover tab then offers to update the device.
+
+## Widget
+
+Add the **Géorisques** widget to a dashboard. It shows the name of the commune, then one line
+per risk, in colours:
+
+- clay, radon and earthquake: green when low, yellow when medium, red when high (the widget
+  palette has no orange);
+- flooding: green without PPRI or TRI, yellow otherwise;
+- classified sites and nearby Seveso sites: yellow when there are Seveso sites;
+- cavities, ground movements, decrees and the latest decree: grey, for information.
+
+It ends with the source and the date of the read, and a **Géorisques report** button opening
+the "Know the risks near me" report of your address (or of your commune) on georisques.gouv.fr,
+with the details and the maps.
+
+## Scene trigger
+
+**New natural disaster decree**: the State recognised a natural disaster for your commune, and
+Géorisques published it. Géorisques being read once a day, the scene starts within 24 hours of
+its publication on Géorisques.
+
+Filter (optional): the **kind of disaster** — flood, drought (clay), ground movement,
+earthquake, storm, avalanche, other. Drought covers the "differential ground movements following
+drought and soil rehydration": the cracks due to clay.
+
+Variables for the actions: `kind` (the kind in English: `flood`, `drought`…), `kind_name` (the
+kind in the language of the settings), `label` (the label of the Journal officiel, in French),
+`event_start` and `event_end` (dates of the event), `published` (publication date), `commune`,
+`insee`, `count` (the number of decrees since 1982).
+
+The trigger does not fire at the first read of a commune (it learns the existing decrees), nor
+for a decree published more than 180 days ago that would show up late, and five times per read
+at most.
+
+## Scene examples
+
+- **Tell your insurer in time**: trigger "New natural disaster decree" → send the message
+  "Natural disaster recognised in {{triggerEvent.data.commune}}: {{triggerEvent.data.label}}
+  (from {{triggerEvent.data.event_start}} to {{triggerEvent.data.event_end}}). If you have
+  damage, declare it to your insurer within 30 days of the publication of the decree."
+- **A house on clay after a drought**: trigger "New natural disaster decree", kind drought →
+  message "Drought decree published: walk around the house and take pictures of the cracks."
+- **Radon: air the house every day**: trigger "Every day at 10:00", condition "Radon potential"
+  equals 3 → message "Remember to air the rooms for 10 minutes." Radon builds up in closed
+  rooms, especially in basements.
+
+## Data sources, licence and quotas
+
+- **Géorisques** (`www.georisques.gouv.fr/api/v1`), the risk portal of the French Ministry of
+  Ecological Transition, run with the BRGM. API v1 is open, without account or token (v2 needs
+  one). Public data, reusable when citing the source, under the terms of use of
+  georisques.gouv.fr: the widget cites Géorisques and the date of the read.
+- **Address service of IGN** (Géoplateforme, `data.geopf.fr/geocodage`), which took over the
+  Adresse API (Base Adresse Nationale): it gives the commune of a position or of an address. One
+  request a day.
+- No quota is published for API v1 of Géorisques. The integration stays light: one read a day,
+  about 14 requests 0.3 second apart, and one retry an hour for the part that failed, alone. It
+  names itself in its requests. Do not press "Read now" over and over.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"Give your house a location in Gladys"**: set the location of your house in Gladys
+  (Settings, Houses), or choose "An address" or "A commune".
+- **"Address not found"**: check the address (number, street, commune) or use the INSEE code.
+- **"… is not an INSEE code"**: the INSEE code has 5 characters and is not the postcode
+  (Toulouse: postcode 31000, INSEE code 31555).
+- **"Géorisques does not answer"**: the service is down or Gladys has no Internet access. The
+  integration tries again every hour; the last values stay displayed.
+- **"Géorisques did not answer for: radon…"**: only a part failed; it is asked again within the
+  hour, alone.
+- **No radon potential**: Géorisques publishes none for this commune; in Paris, Lyon and
+  Marseille, it is published by arrondissement: choose a house or an address rather than the
+  INSEE code of the commune.
+- **No "Clay shrink-swell" feature**: the device was created with an INSEE code. Switch to a
+  house or an address, then update the device in the Discover tab.
+- **Logs**: quiet by default (startup, commune change, new decree, "Read now", failures once).
+  `LOG_LEVEL=debug` shows every read. Neither the position nor the address is ever written
+  there.
+
+## Limits
+
+- **Not a safety alert system** and **not an official risk statement**: for a sale or a rental,
+  the risk statement is made on georisques.gouv.fr.
+- Apart from the clay and the nearby Seveso sites, the information is **that of the commune**,
+  not of your plot: a PPRI in the commune does not mean your street is in a flood zone. The
+  Géorisques report of your address (widget button) gives the details.
+- The clay exposure comes from a national map at 1:50,000: it tells a trend of the ground, not
+  the state of your land.
+- The data follows the updates of Géorisques: a new decree arrives there a few days to a few
+  weeks after its publication in the Journal officiel.
+- Seismic zones and radon categories are regulatory; they rarely change.
+- Developed without a live connection to Géorisques: the formats were taken from the official
+  API documentation; a few details (date format, page size) will be confirmed by the first
+  users.
+- Not affiliated with the French Ministry of Ecological Transition, the BRGM or IGN.

@@ -16,12 +16,13 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/monitor.test.js          # one file
+node --test --test-name-pattern "decree"  # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
 npx github:GladysAssistant/integration-store .   # store admission checks
+node scripts/probe.mjs 31555              # the real Géorisques API, read-only (needs network)
 ```
 
 The CI (`.github/workflows/ci.yml`) runs `format:check`, `lint` and `test` on
@@ -31,16 +32,23 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        handlers → monitor, the `read_now` action, the widget
+src/monitor.js                    location, daily reads (own hourly timer), states, `catnat_decree` trigger
+src/georisques.js                 Géorisques API v1 client and parsers, readReport (one part per service)
+src/geocoder.js                   Géoplateforme geocoding (reverse for the house, search for an address)
+src/http.js                       GET JSON with timeout and User-Agent
+src/devices.js                    the Gladys device of a commune (features, four-language names)
+src/widgets.js                    `risks` dashboard widget
+src/messages.js                   texts sent from the container (en, fr, de, es), levels, decree kinds
+src/store.js                      /data/georisques.json
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+scripts/probe.mjs                 read-only probe of the real API, for a machine with network access
+gladys-assistant-integration.json manifest: name, config_schema, action, trigger, widget...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys, same sections
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/helpers/world.js             fake Gladys + fake Géorisques and Géoplateforme serving the fixtures
+test/fixtures/                    recorded geocoding answers, synthetic Géorisques ones (see its README)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +78,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** is in four languages (English, French, German, Spanish):
+  action messages, manifest texts, feature names, widget texts and
+  `docs/{en,fr,de,es}.md`, kept in sync with the same sections.
+  `test/i18n.test.js` enforces it.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +243,44 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Propre à cette intégration (Géorisques, 15/10/2026)
+
+- **Sources** : API Géorisques **v1** (`www.georisques.gouv.fr/api/v1`), ouverte sans jeton ; la
+  v2 demande un jeton (compte Cerbère ou FranceConnect, valable un an), la v1 « reste accessible
+  sans jeton ». Géocodage par la Géoplateforme de l'IGN (`data.geopf.fr/geocodage`, même format
+  que l'ancienne API Adresse `api-adresse.data.gouv.fr`, décommissionnée). Aucun quota publié
+  pour Géorisques : une lecture par jour (~14 requêtes espacées de 0,3 s), une relance par heure
+  pour la seule partie en échec.
+- **Format** (description OpenAPI 1.8.2a, copie dans `gpabois/georisques`) : enveloppe paginée
+  `{ results, page, total_pages, data, … }` partout sauf `rga`, objet nu `{ exposition,
+codeExposition }`. `results` est le total : un comptage = une requête `page_size=1`.
+  `latlon` vaut **`lon,lat`** ; `rayon` 10 000 m au plus ; `code_insee` jusqu'à 10 codes et
+  jamais avec `rayon`. `installations_classees` filtre `statutSeveso` = 1 seuil haut, 2 seuil
+  bas, 3 non Seveso. `ppr` filtre `code_risque` 11 = inondation, `code_etat` 01 prescrit, 02
+  approuvé, 03 abrogé, 04 appliqué par anticipation.
+- **Radon : à l'arrondissement seulement à Paris, Lyon, Marseille** (le dit la doc de l'API).
+  Le géocodeur donne le code de l'arrondissement (`citycode` 75110) : il sert au radon, et la
+  commune (75056, 69123, 13055, `communeOfDistrict`) à tout le reste, comme le fait Géorisques
+  dans ses propres liens de rapport.
+- **Non vérifié faute de réseau** (la session n'atteint ni Géorisques ni la Géoplateforme, et
+  aucune réponse réelle publiée n'a été trouvée) : format des dates CatNat (`dd/mm/yyyy` supposé,
+  ISO accepté), plafond de `page_size` de `gaspar/catnat` (on suit `total_pages`), réponse de
+  `rga` hors zone argileuse (404/204/vide → inconnu), sens réel de `statutSeveso`, paramètres
+  de la page `rapport2` liée par le widget. `scripts/probe.mjs <INSEE> [--address …] [--raw]`
+  vérifie tout cela d'une machine qui a le réseau ; les fixtures Géorisques sont synthétiques
+  (`.synthetic.json`), à remplacer par ses sorties `--raw`.
+- **Couples** : argiles et radon en `risk/integer` (pastille 0 vert … 3 rouge) ; la zone
+  sismique 1-5 ne rentre pas dans la pastille de risque (max 3) : `sismic-sensor/decimal`
+  (1-5), chiffre officiel. Les comptages en `counter-sensor/integer` (0 … 100 000).
+  L'inondation et le dernier arrêté en `text/text`.
+- **Appareil** : un par commune, identifiant externe = **code INSEE** (déménager crée un nouvel
+  appareil). Argiles et Seveso à 5 km n'existent qu'avec une position (maison ou adresse
+  précise) ; une adresse réduite à un nom de commune (`type: municipality`) n'est pas une
+  position (mairie).
+- **Déclencheur `catnat_decree`** : un code d'arrêté absent de la lecture précédente de la même
+  commune, publié il y a moins de 180 jours, cinq au plus par lecture ; la première lecture
+  d'une commune n'émet rien. Les codes vus sont gardés dans `/data` : un arrêté publié pendant un
+  arrêt part au redémarrage.
+- La position de la maison et l'adresse ne sont **ni dans `/data` ni dans les journaux** (test
+  dans `test/logs.test.js` et `test/monitor.test.js`).

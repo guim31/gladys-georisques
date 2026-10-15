@@ -256,22 +256,29 @@ test('the documentation exists in the four languages, with the same sections', (
   }
 });
 
+// The prose of a document on one line: Prettier wraps it anywhere, quotes included.
+const flat = (text) => text.replace(/\s*\n>?\s*/g, ' ');
+
 test('the documentation says what the integration is not, and German says "du"', () => {
-  assert.match(docs.en, /not a safety alert system/);
-  assert.match(docs.fr, /pas un système d'alerte de sécurité/);
-  assert.match(docs.de, /kein Sicherheitswarnsystem/);
-  assert.match(docs.es, /no es un sistema de alerta de seguridad/i);
-  assert.match(docs.en, /not affiliated with the French Ministry/);
-  assert.match(docs.fr, /non affiliée au ministère/i);
-  assert.match(docs.de, /nicht mit dem französischen Ministerium verbunden/i);
-  assert.match(docs.es, /sin afiliación con el Ministerio/i);
+  const flatDocs = Object.fromEntries(LANGS.map((lang) => [lang, flat(docs[lang])]));
+  assert.match(flatDocs.en, /not a safety alert system/);
+  assert.match(flatDocs.fr, /pas un système d'alerte de sécurité/);
+  assert.match(flatDocs.de, /kein Sicherheitswarnsystem/);
+  assert.match(flatDocs.es, /no es un sistema de alerta de seguridad/i);
+  assert.match(flatDocs.en, /not affiliated with the French Ministry/);
+  assert.match(flatDocs.fr, /non affiliée au ministère/i);
+  assert.match(flatDocs.de, /nicht mit dem französischen Ministerium für den ökologischen Wandel/i);
+  assert.match(flatDocs.es, /sin afiliación con el Ministerio/i);
   // Developed without reaching the live service (see test/fixtures/README.md).
-  assert.match(docs.en, /Developed without a live connection to Géorisques: feedback welcome/);
+  assert.match(flatDocs.en, /Developed without a live connection to Géorisques: feedback welcome/);
   assert.match(
     docs.fr,
     /Développée sans connexion réelle à Géorisques : vos retours sont bienvenus/,
   );
-  assert.match(docs.de, /Ohne echte Verbindung zu Géorisques entwickelt: Rückmeldungen willkommen/);
+  assert.match(
+    flatDocs.de,
+    /Ohne echte Verbindung zu Géorisques entwickelt: Rückmeldungen willkommen/,
+  );
   assert.match(
     docs.es,
     /Desarrollada sin conexión real con Géorisques: sus comentarios son bienvenidos/,
