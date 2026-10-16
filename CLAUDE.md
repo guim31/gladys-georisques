@@ -256,8 +256,8 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   `{ results, page, total_pages, data, … }` partout sauf `rga`, objet nu `{ exposition,
 codeExposition }`. `results` est le total : un comptage = une requête `page_size=1`.
   `latlon` vaut **`lon,lat`** ; `rayon` 10 000 m au plus ; `code_insee` jusqu'à 10 codes et
-  jamais avec `rayon`. `installations_classees` filtre `statutSeveso` = 1 seuil haut, 2 seuil
-  bas, 3 non Seveso. `ppr` filtre `code_risque` 11 = inondation, `code_etat` 01 prescrit, 02
+  jamais avec `rayon`. `installations_classees` filtre `statutSeveso` = `SEUIL_HAUT`, `SEUIL_BAS`,
+  `NON_SEVESO` (vérifié le 16/10/2026 : les codes 1, 2, 3 de la description OpenAPI donnent 0). `ppr` filtre `code_risque` 11 = inondation, `code_etat` 01 prescrit, 02
   approuvé, 03 abrogé, 04 appliqué par anticipation.
 - **Radon : à l'arrondissement seulement à Paris, Lyon, Marseille** (le dit la doc de l'API).
   Le géocodeur donne le code de l'arrondissement (`citycode` 75110) : il sert au radon, et la
@@ -266,7 +266,7 @@ codeExposition }`. `results` est le total : un comptage = une requête `page_siz
 - **Non vérifié faute de réseau** (la session n'atteint ni Géorisques ni la Géoplateforme, et
   aucune réponse réelle publiée n'a été trouvée) : format des dates CatNat (`dd/mm/yyyy` supposé,
   ISO accepté), plafond de `page_size` de `gaspar/catnat` (on suit `total_pages`), réponse de
-  `rga` hors zone argileuse (404/204/vide → inconnu), sens réel de `statutSeveso`, paramètres
+  `rga` hors zone argileuse (404/204/vide → inconnu), paramètres
   de la page `rapport2` liée par le widget. `scripts/probe.mjs <INSEE> [--address …] [--raw]`
   vérifie tout cela d'une machine qui a le réseau ; les fixtures Géorisques sont synthétiques
   (`.synthetic.json`), à remplacer par ses sorties `--raw`.

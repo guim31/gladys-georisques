@@ -97,7 +97,7 @@ if (sample) {
   show('  date format', `${sample.date_debut_evt} / ${sample.date_publication_jo}`);
   show('  label', sample.libelle_risque_jo);
 }
-for (const tier of ['1', '2', '3']) {
+for (const tier of ['SEUIL_HAUT', 'SEUIL_BAS', 'NON_SEVESO']) {
   const body = await api('installations_classees', {
     code_insee: insee,
     statutSeveso: tier,

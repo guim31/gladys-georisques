@@ -10,6 +10,12 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Seveso sites were always counted as 0, in the commune and within 5 km: the
+  Géorisques API no longer accepts the codes 1 and 2 for the Seveso status, only
+  `SEUIL_HAUT` and `SEUIL_BAS`.
+
 ## [1.0.1] - 2026-10-15
 
 ### Added
