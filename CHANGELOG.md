@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-16
+
 ### Fixed
 
 - Seveso sites were always counted as 0, in the commune and within 5 km: the
@@ -34,5 +36,6 @@ the notes of the version's GitHub Release.
 - Feature names and texts in English, French, German and Spanish, and the
   documentation in the four languages.
 
-[Unreleased]: https://github.com/guim31/gladys-georisques/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/guim31/gladys-georisques/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/guim31/gladys-georisques/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/guim31/gladys-georisques/releases/tag/v1.0.1
