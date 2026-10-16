@@ -37,8 +37,10 @@ const MAX_CATNAT_PAGES = 10;
 // Codes of the `ppr` service: 11 = flood; states 01 prescribed, 02 approved,
 // 04 applied in advance (03, repealed, is left out).
 const PPR_FLOOD = { code_risque: '11', code_etat: '01,02,04' };
-// `statutSeveso` of installations_classees: 1 upper tier, 2 lower tier.
-const SEVESO = { HIGH: '1', LOW: '2' };
+// `statutSeveso` of installations_classees. The OpenAPI description still says 1
+// (upper tier) and 2 (lower tier), but the API ignores those codes and answers 0:
+// it only filters on SEUIL_HAUT, SEUIL_BAS and NON_SEVESO (checked 16/10/2026).
+const SEVESO = { HIGH: 'SEUIL_HAUT', LOW: 'SEUIL_BAS' };
 
 const digit = (value, min, max) => {
   const match = /\d/.exec(String(value ?? ''));

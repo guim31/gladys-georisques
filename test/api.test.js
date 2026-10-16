@@ -137,8 +137,8 @@ test('a full report asks each service once, the position ones only with a positi
   assert.deepEqual(
     nearby.map((url) => [url.searchParams.get('rayon'), url.searchParams.get('statutSeveso')]),
     [
-      ['5000', '1'],
-      ['5000', '2'],
+      ['5000', 'SEUIL_HAUT'],
+      ['5000', 'SEUIL_BAS'],
     ],
   );
 

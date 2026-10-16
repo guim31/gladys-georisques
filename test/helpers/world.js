@@ -165,15 +165,18 @@ export function createApi() {
           return api.count(commune?.tri ?? 0, pageSize);
         case 'installations_classees': {
           if (params.has('latlon')) {
-            const value = tier === '1' ? api.nearby.high : tier === '2' ? api.nearby.low : 0;
+            const value =
+              tier === 'SEUIL_HAUT' ? api.nearby.high : tier === 'SEUIL_BAS' ? api.nearby.low : 0;
             return api.count(value, pageSize);
           }
           const value =
-            tier === '1'
+            tier === 'SEUIL_HAUT'
               ? commune?.sevesoHigh
-              : tier === '2'
+              : tier === 'SEUIL_BAS'
                 ? commune?.sevesoLow
-                : commune?.installations;
+                : tier
+                  ? 0 // the real API answers 0 for any other code (1, 2…)
+                  : commune?.installations;
           return api.count(value ?? 0, pageSize);
         }
         case 'cavites':
