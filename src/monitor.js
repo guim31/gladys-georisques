@@ -270,12 +270,14 @@ export class Monitor {
   }
 
   /**
-   * What is kept of a commune no longer followed: nothing. Coming back to it
-   * later starts again by learning its decrees, like a new commune.
+   * The report and the name of a commune no longer followed are dropped. Its
+   * decrees seen are kept (a few codes): a house missing for a while (address
+   * service, location removed then restored) must not lose the decrees
+   * published meanwhile.
    */
   forgetOtherCommunes() {
     const followed = new Set(this.places.map((place) => place.insee));
-    for (const table of [this.data.reports, this.data.decrees, this.data.city]) {
+    for (const table of [this.data.reports, this.data.city]) {
       for (const insee of Object.keys(table)) {
         if (!followed.has(insee)) {
           delete table[insee];
@@ -406,6 +408,10 @@ export class Monitor {
       return { location: null, problem: this.houseProblems[selector] };
     }
     const { position, houseSelector } = this.config;
+    if (position === 'house' && selector === houseSelector) {
+      // The house of the configuration, gone or without location: say why.
+      return { location: null, problem: this.problem };
+    }
     if (position === 'house' && !houseSelector) {
       // Every house is followed: a house neither followed nor in trouble is gone.
       return {
@@ -585,12 +591,14 @@ export class Monitor {
   async cycle({ force = false } = {}) {
     const now = this.now();
     const configChanged = this.locationKey !== this.configKey();
-    const fullDue = this.places.some((place) => this.fullReadDue(place, now));
-    if (
-      force ||
-      configChanged ||
-      (this.places.length > 0 ? fullDue : now - this.lastLocateAt >= this.timings.retryMs - MINUTE)
-    ) {
+    // The houses are geocoded on their own clock: once a day, or within the
+    // hour while no place is known or the address service fails. A commune that
+    // Géorisques does not answer for must not geocode every house every hour.
+    const locateEvery =
+      this.places.length > 0 && !this.failing.has('geocoder')
+        ? this.timings.readEveryMs
+        : this.timings.retryMs;
+    if (force || configChanged || now - this.lastLocateAt >= locateEvery - MINUTE) {
       await this.locate();
     }
     let changed = false;

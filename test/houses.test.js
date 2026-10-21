@@ -251,7 +251,64 @@ test('a commune no longer followed is forgotten from the saved file', async () =
   const { readFile } = await import('node:fs/promises');
   const saved = JSON.parse(await readFile(join(world.dataDir, 'georisques.json'), 'utf8'));
   assert.deepEqual(Object.keys(saved.reports), [CHEVILLY]);
-  assert.deepEqual(Object.keys(saved.decrees), [CHEVILLY]);
+  // The decrees seen are kept (see the next test), not the reports.
+  assert.deepEqual(Object.keys(saved.decrees).sort(), [PARIS, CHEVILLY].sort());
   // Still no position nor address in it.
   assert.doesNotMatch(JSON.stringify(saved), /48\.87|2\.363|Toudic|48\.765/);
+});
+
+test('a house missing for a while keeps its decrees: the ones published meanwhile fire', async (t) => {
+  const world = await createWorld({ houses: HOUSES, config: { language: 'en' } });
+  t.after(() => world.app.stop());
+  const flat = world.fake.houses.find((house) => house.selector === 'appartement');
+  const { latitude, longitude } = flat;
+  Object.assign(flat, { latitude: null, longitude: null });
+  await world.fake.configUpdated({ language: 'en' });
+  assert.deepEqual(
+    world.fake.discoveredDevices.map((device) => device.external_id),
+    [`ext:test-integration:commune:${CHEVILLY}`],
+  );
+  world.api.communes[PARIS].catnat.push(
+    decreeRow(
+      'IOMI2627002A',
+      'Inondations et/ou Coulées de Boue',
+      '02/10/2026',
+      '12/10/2026',
+      PARIS,
+    ),
+  );
+  Object.assign(flat, { latitude, longitude });
+  await world.fake.configUpdated({ language: 'en' });
+  assert.equal(world.fake.sceneEvents.length, 1);
+  assert.equal(world.fake.sceneEvents[0].data.insee, PARIS);
+});
+
+test('Géorisques silent for a day: the houses are still geocoded once a day, not every hour', async (t) => {
+  const api = createApi();
+  api.down.georisques = 503;
+  const world = await createWorld({ api, houses: HOUSES });
+  t.after(() => world.app.stop());
+  assert.equal(reverseCalls(world), 3);
+  for (let hour = 1; hour < 24; hour += 1) {
+    await tick(world, 1);
+  }
+  assert.equal(reverseCalls(world), 3, 'hourly retries of Géorisques only');
+  assert.ok(world.api.calls('radon').length > 2, 'Géorisques is retried every hour');
+  await tick(world, 1);
+  assert.equal(reverseCalls(world), 6, 'the daily geocoding');
+});
+
+test('the widget of the configured house says why it is not shown', async (t) => {
+  const unlocated = await createWorld({ houses: HOUSES, config: { house: 'chalet' } });
+  t.after(() => unlocated.app.stop());
+  assert.match(
+    (await widget(unlocated, 'chalet')).components[0].text,
+    /La maison « Chalet » n'a pas de position/,
+  );
+  const gone = await createWorld({ houses: HOUSES, config: { house: 'grenier' } });
+  t.after(() => gone.app.stop());
+  assert.match(
+    (await widget(gone, 'grenier')).components[0].text,
+    /La maison « grenier » n'existe plus dans Gladys : choisissez-en une autre dans la configuration/,
+  );
 });
