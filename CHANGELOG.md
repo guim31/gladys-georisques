@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-21
+
 ### Added
 
 - Several houses: with no house chosen in the configuration, every house of
@@ -49,6 +51,7 @@ the notes of the version's GitHub Release.
 - Feature names and texts in English, French, German and Spanish, and the
   documentation in the four languages.
 
-[Unreleased]: https://github.com/guim31/gladys-georisques/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/guim31/gladys-georisques/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/guim31/gladys-georisques/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/guim31/gladys-georisques/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/guim31/gladys-georisques/releases/tag/v1.0.1
