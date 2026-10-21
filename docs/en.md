@@ -50,7 +50,7 @@ you save the configuration. No flood of requests.
 | Setting                       | What it does                                                                                                                                                  |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Location                      | **My house in Gladys** (default), **An address** or **A commune (INSEE code)**.                                                                               |
-| House                         | The house whose location counts, if you have several. Empty: the first house of Gladys that has a location.                                                   |
+| House                         | Empty (default): **every house of Gladys that has a location** is followed, one device per commune (see below). A house: that one only.                       |
 | Address                       | Number, street and commune, as on an envelope: `12 rue de la Mairie, 31000 Toulouse`. A commune name alone works too, without a precise position (see below). |
 | INSEE code of the commune     | 5 characters, **not the postcode**: `31555` for Toulouse, `2A004` for Ajaccio. It is on your property tax notice or on the Insee website.                     |
 | Language of the feature names | Names of the features of the new device, language of its texts (flooding, latest disaster) and of the trigger variables. French by default.                   |
@@ -64,6 +64,22 @@ sites within 5 km: both depend on the exact place of the home, not on the commun
 In Paris, Lyon and Marseille, the device is the one of the commune (75056, 69123, 13055), where
 Géorisques files the decrees and plans; the radon is read for your arrondissement when the
 position or the address gives it.
+
+### Several houses
+
+With the House setting empty, the integration follows **every house of Gladys that has a
+location**: a house in Toulouse and a holiday home in Brittany give two devices, "Risks in my
+commune (Toulouse)" and "Risks in my commune (Plouharnel)", each with its own values. A house
+without a location is skipped; a house added or located later is followed at the next daily
+read, or at once when you save the configuration.
+
+**Two houses in the same commune share one device**: the device belongs to the commune, and
+the commune is read once. Its clay exposure and its Seveso sites within 5 km, which depend on
+the exact place, are read at the **first of these houses** in alphabetical order. The widget of
+the other house shows the commune without these two lines.
+
+With one house, nothing changes. To follow a single house among several, choose it in the House
+setting.
 
 ### Check it: "Read now"
 
@@ -116,6 +132,12 @@ It ends with the source and the date of the read, and a **Géorisques report** b
 the "Know the risks near me" report of your address (or of your commune) on georisques.gouv.fr,
 with the details and the maps.
 
+**Several houses**: the widget has a **House** setting. Put one widget per house on your
+dashboards and choose its house in each; empty, the widget shows the location of the
+configuration (with several houses, the first one in alphabetical order). A widget whose house is
+not followed (no location, or the configuration reads an address, a commune or another house)
+says so.
+
 ## Scene trigger
 
 **New natural disaster decree**: the State recognised a natural disaster for your commune, and
@@ -155,9 +177,9 @@ at most.
   georisques.gouv.fr: the widget cites Géorisques and the date of the read.
 - **Address service of IGN** (Géoplateforme, `data.geopf.fr/geocodage`), which took over the
   Adresse API (Base Adresse Nationale): it gives the commune of a position or of an address. One
-  request a day.
-- No quota is published for API v1 of Géorisques. The integration stays light: one read a day,
-  about 14 requests 0.3 second apart, and one retry an hour for the part that failed, alone. It
+  request a day (per house followed).
+- No quota is published for API v1 of Géorisques. The integration stays light: one read a day per
+  commune followed, about 14 requests 0.3 second apart, and one retry an hour for the part that failed, alone. It
   names itself in its requests. Do not press "Read now" over and over.
 
 ## Troubleshooting
@@ -176,6 +198,8 @@ at most.
   INSEE code of the commune.
 - **No "Clay shrink-swell" feature**: the device was created with an INSEE code. Switch to a
   house or an address, then update the device in the Discover tab.
+- **Three houses, and every widget shows the same commune**: give each widget its house in the
+  widget settings, and leave the House setting of the configuration empty.
 - **Logs**: quiet by default (startup, commune change, new decree, "Read now", failures once).
   `LOG_LEVEL=debug` shows every read. Neither the position nor the address is ever written
   there.

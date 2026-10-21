@@ -133,6 +133,7 @@ const SAMPLE = {
   parts: 'radon, zone sismique, installations classées',
   commune: 'Saint-Rémy-en-Bouzemont-Saint-Genest-et-Isson (51517)',
   count: 120,
+  communes: 'Saint-Rémy-en-Bouzemont-Saint-Genest-et-Isson (51517), Chevilly-Larue (94021)',
   name: 'Résidence secondaire du bord du lac',
 };
 const renderSample = (value) => (typeof value === 'function' ? value(SAMPLE) : value);
@@ -202,7 +203,7 @@ test('the radon and seismic levels have their words for every level', () => {
 });
 
 test('the widget texts have the four languages and fit their component', () => {
-  const longTexts = new Set(['empty', 'waiting']);
+  const longTexts = new Set(['empty', 'waiting', 'widgetHouseGone', 'notFollowed']);
   const found = Object.entries(TEXT).flatMap(([key, value]) =>
     problems(value, `TEXT.${key}`, longTexts.has(key) ? MAX.message : MAX.short - 10),
   );

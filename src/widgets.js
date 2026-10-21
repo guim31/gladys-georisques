@@ -1,6 +1,12 @@
 // -----------------------------------------------------------------------------
 // Dashboard widget (manifest `widgets`, Gladys 5.1+): `risks`.
 //
+// Setting `house` (a house of Gladys, `source: "houses"`): the place shown.
+// Empty: the configured location, or the first house followed. Two houses of
+// the same commune share the commune's values; the second one is shown
+// without clay and Seveso sites within 5 km, read at the first one (see
+// src/monitor.js `placeOf`).
+//
 // A heading with the commune, one status line per risk (10 at most): clay
 // exposure and Seveso sites within 5 km when the position of the home is
 // known, radon, seismic zone, flooding, classified sites, cavities, ground
@@ -37,6 +43,18 @@ export const TEXT = {
     fr: "Pas encore de position : remplissez la configuration de l'intégration Géorisques.",
     de: 'Noch kein Standort: Fülle die Konfiguration der Integration Géorisques aus.',
     es: 'Aún no hay ubicación: rellene la configuración de la integración Géorisques.',
+  },
+  widgetHouseGone: {
+    en: 'This house no longer exists in Gladys: choose another one in the widget settings.',
+    fr: "Cette maison n'existe plus dans Gladys : choisissez-en une autre dans les réglages du widget.",
+    de: 'Dieses Haus gibt es in Gladys nicht mehr: Wähle in den Widget-Einstellungen ein anderes.',
+    es: 'Esta casa ya no existe en Gladys: elija otra en los ajustes del widget.',
+  },
+  notFollowed: {
+    en: 'This house is not followed: the integration reads the location of its configuration. Leave the house of the widget empty, or choose "My house in Gladys" without a house in the configuration.',
+    fr: "Cette maison n'est pas suivie : l'intégration lit le lieu de sa configuration. Laissez la maison du widget vide, ou choisissez « Ma maison dans Gladys » sans maison dans la configuration.",
+    de: 'Dieses Haus wird nicht verfolgt: Die Integration liest den Ort ihrer Konfiguration. Lass das Haus des Widgets leer oder wähle „Mein Haus in Gladys“ ohne Haus in der Konfiguration.',
+    es: 'Esta casa no se sigue: la integración lee el lugar de su configuración. Deje vacía la casa del widget o elija «Mi casa en Gladys» sin casa en la configuración.',
   },
   waiting: {
     en: 'Waiting for the first answer of Géorisques.',
@@ -202,12 +220,11 @@ const body = (text) => ({ type: 'text', variant: 'body', text });
 
 export const WIDGETS = {
   [WIDGET_KEY]: {
-    async get(monitor, { language = 'en' }) {
+    async get(monitor, { language = 'en', settings = {} }) {
       const lang = PHRASES[language] ? language : 'en';
-      const { location } = monitor;
+      const { location, problem } = monitor.placeOf(settings?.house || null);
       if (!location) {
-        const problem = monitor.problem;
-        const text = problem ? STATUS[lang][problem.key] : null;
+        const text = problem ? (TEXT[problem.key]?.[lang] ?? STATUS[lang][problem.key]) : null;
         return {
           ttl_seconds: TTL_SECONDS,
           components: [
@@ -215,7 +232,7 @@ export const WIDGETS = {
           ],
         };
       }
-      const report = monitor.report();
+      const report = monitor.reportOf(location.insee);
       const link = {
         type: 'button',
         label: t(TEXT.report, lang),

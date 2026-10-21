@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // Small persistence under /data (the only writable path of the container): the
-// last report read from Géorisques (INSEE code and name of the commune, the
-// values, when they were read) and the identifiers of the natural catastrophe
-// decrees already seen. Losing the file is harmless: everything is read again
+// last report read from Géorisques for each followed commune (INSEE code and
+// name of the commune, the values, when they were read) and the identifiers of
+// the natural catastrophe decrees already seen (see src/monitor.js `loadData`). Losing the file is harmless: everything is read again
 // at the next start, and a decree published meanwhile then fires no trigger.
 // No position, no address: they are resolved again at every start.
 // -----------------------------------------------------------------------------

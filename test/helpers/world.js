@@ -32,6 +32,31 @@ export const HOUSE = {
   longitude: 2.364375,
 };
 
+// More houses (sorted by name, as getHouses() gives them): a flat in Paris
+// 10e at the public position of the recorded search answer, a chalet without
+// a location, a garage in Chevilly-Larue too, a little south of the house.
+export const FLAT = {
+  id: 'house-2',
+  name: 'Appartement',
+  selector: 'appartement',
+  latitude: 48.870131,
+  longitude: 2.363473,
+};
+export const CHALET = {
+  id: 'house-3',
+  name: 'Chalet',
+  selector: 'chalet',
+  latitude: null,
+  longitude: null,
+};
+export const GARAGE = {
+  id: 'house-4',
+  name: 'Garage',
+  selector: 'garage',
+  latitude: 48.765,
+  longitude: 2.36,
+};
+
 export const CHEVILLY = '94021';
 export const PARIS = '75056';
 export const PARIS_10 = '75110';
@@ -123,6 +148,12 @@ export function createApi() {
     clay: fixture('georisques/rga-forte.synthetic.json'),
     nearby: { high: 1, low: 1 },
     reverse: fixture('geocoder/reverse-chevilly-larue.json'),
+    // Reverse answers by "lat,lon" (6 decimals); any other point gets `reverse`.
+    reverseAt: {
+      [`${FLAT.latitude.toFixed(6)},${FLAT.longitude.toFixed(6)}`]: fixture(
+        'geocoder/search-paris-10.json',
+      ),
+    },
     // The page size Géorisques caps at (unknown for real: small enough to page).
     maxPageSize: 4,
     down: { georisques: false, geocoder: false },
@@ -190,7 +221,8 @@ export function createApi() {
 
     geocoder(url) {
       if (url.pathname.endsWith('/reverse')) {
-        return api.reverse;
+        const point = `${url.searchParams.get('lat')},${url.searchParams.get('lon')}`;
+        return api.reverseAt[point] ?? api.reverse;
       }
       const query = url.searchParams.get('q') ?? '';
       if (/toudic/i.test(query)) {

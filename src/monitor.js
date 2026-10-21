@@ -4,21 +4,27 @@
 // Everything the SDK handlers, the action and the widget need goes through it
 // (src/app.js wires it).
 //
-// Location (configuration `position`):
+// Locations (configuration `position`):
 //   - house    the house chosen in the configuration (its selector), or else
-//              the first house of Gladys that has a location; its commune
-//              comes from the address service of IGN (reverse geocoding);
+//              EVERY house of Gladys that has a location; the commune of a
+//              house comes from the address service of IGN (reverse geocoding).
+//              Houses in the same commune share one place (one device, one
+//              read): its position, for clay and the Seveso sites within
+//              5 km, is the one of the first of them (houses sorted by name);
 //   - address  the address typed, geocoded the same way. A commune name alone
 //              is found as a commune, without a position;
 //   - commune  an INSEE code: no position, so no clay exposure and no
 //              "Seveso sites within 5 km".
-// The position is kept in memory only, resolved again at each daily read.
+// One place per commune (`this.places`), the first one being the primary
+// place: the one of a single-location setup, of the widget without a house
+// setting and of the logs. The positions are kept in memory only, resolved
+// again at each daily read.
 //
 // Scheduling: the device is published with should_poll: false (the core does
 // not poll external devices reliably, GladysAssistant/Gladys#3198). A timer
-// ticks every hour: once a day (and at the start, and when the configuration
-// changes) it reads Géorisques again; a part that failed is asked again at the
-// next tick, alone. Every tick publishes the states, only those that changed
+// ticks every hour: once a day per commune (and at the start, and when the
+// configuration changes) it reads Géorisques again; a part that failed is asked
+// again at the next tick, alone. Every tick publishes the states, only those that changed
 // plus a heartbeat every 12 hours. onPoll is only a fallback.
 //
 // Trigger: a decree whose identifier was not in the previous read of the same
@@ -82,6 +88,9 @@ const POSITION_PARTS = ['clay', 'sevesoNearby'];
 
 const dayMs = (day) => (day ? Date.parse(`${day}T00:00:00Z`) : NaN);
 
+const located = (house) => Number.isFinite(house.latitude) && Number.isFinite(house.longitude);
+const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
 export class Monitor {
   /**
    * @param {object} options
@@ -107,8 +116,12 @@ export class Monitor {
     this.now = now ?? (() => Date.now());
     this.config = null;
     this.data = emptyData();
-    // `{ insee, radonInsee, city, label, position }`, or null with `problem`.
-    this.location = null;
+    // One place per followed commune: `{ insee, radonInsee, city, label,
+    // position, houses }`, `houses` being the selectors of the houses of Gladys
+    // it stands for (the first one gives the position). Empty with `problem`.
+    this.places = [];
+    // Why a house of Gladys is not followed, by selector (widget setting).
+    this.houseProblems = {};
     this.locationKey = null;
     this.problem = null;
     this.lastLocateAt = -Infinity;
@@ -121,6 +134,11 @@ export class Monitor {
     this.stopped = false;
     // Keys of the failures already logged, so a repeated one is not logged again.
     this.failing = new Set();
+  }
+
+  /** The primary place: the only one of a single-location setup, or null. */
+  get location() {
+    return this.places[0] ?? null;
   }
 
   /** Log a failure once (warn or error), then at debug until `recovered(key)`. */
@@ -145,15 +163,9 @@ export class Monitor {
 
   async start(config) {
     this.config = config;
-    const saved = await this.store.load();
-    if (saved?.version === 1) {
-      this.data = { ...emptyData(), ...saved };
-    }
+    this.data = loadData(await this.store.load());
     await this.runCycle({ force: true });
-    const where = this.location
-      ? `commune ${this.location.insee}${this.location.city ? ` (${this.location.city})` : ''}`
-      : 'no location yet';
-    logger.info(`Started: ${where}, Géorisques read once a day`);
+    logger.info(`Started: ${this.describePlaces()}, Géorisques read once a day`);
     this.schedule();
   }
 
@@ -168,12 +180,12 @@ export class Monitor {
   }
 
   async reconfigure(config) {
-    const before = this.location?.insee ?? null;
+    const before = this.communes();
     this.config = config;
     this.statusKey = undefined;
     await this.runCycle({ force: true });
-    if ((this.location?.insee ?? null) !== before && this.location) {
-      logger.info(`Configuration saved: commune ${this.location.insee}`);
+    if (this.places.length > 0 && this.communes() !== before) {
+      logger.info(`Configuration saved: ${this.describePlaces()}`);
     }
     this.requestRefresh();
   }
@@ -207,66 +219,72 @@ export class Monitor {
     return JSON.stringify([position, houseSelector, address, communeCode, communeInvalid]);
   }
 
-  /**
-   * The house of the configuration (its selector, as `getHouses()` gives it),
-   * or else the first house of Gladys that has a location. Without one,
-   * `problem` says why: `noHouse`, `houseUnlocated` or `houseGone`.
-   */
-  async findHouse() {
-    let houses;
-    try {
-      houses = await this.gladys.getHouses();
-      this.recovered('houses', 'The houses of Gladys can be read again');
-    } catch (err) {
-      this.failed('houses', 'warn', `Cannot read the houses of Gladys: ${err.message}`);
-      return { house: null, problem: { key: 'noHouse' } };
+  /** The INSEE codes followed, as one comparable string. */
+  communes() {
+    return this.places.map((place) => place.insee).join(',');
+  }
+
+  /** "commune 94021 (Chevilly-Larue)", "communes 94021 (…), 75056 (Paris)": no position. */
+  describePlaces() {
+    if (this.places.length === 0) {
+      return 'no location yet';
     }
-    const located = (house) => Number.isFinite(house.latitude) && Number.isFinite(house.longitude);
-    const selector = this.config.houseSelector;
-    if (!selector) {
-      const house = houses.find(located) ?? null;
-      return { house, problem: house ? null : { key: 'noHouse' } };
-    }
-    const chosen = houses.find((house) => house.selector === selector);
-    if (!chosen) {
-      // Only the selector is left of a deleted house: it is the name shown.
-      return { house: null, problem: { key: 'houseGone', name: selector } };
-    }
-    if (!located(chosen)) {
-      return { house: null, problem: { key: 'houseUnlocated', name: chosen.name } };
-    }
-    return { house: chosen, problem: null };
+    const names = this.places.map(
+      (place) => `${place.insee}${place.city ? ` (${place.city})` : ''}`,
+    );
+    return `${names.length > 1 ? 'communes' : 'commune'} ${names.join(', ')}`;
   }
 
   /**
-   * Resolve the configuration into a location. The address service failing
-   * keeps the previous location of the same configuration.
+   * Resolve the configuration into places. The address service failing keeps
+   * the previous places of the same configuration.
    */
   async locate() {
     this.lastLocateAt = this.now();
     const key = this.configKey();
-    const previous = this.locationKey === key ? this.location : null;
+    const previous = this.locationKey === key && this.places.length > 0 ? this.places : null;
     let result;
     try {
-      result = await this.resolveLocation();
+      result = await this.resolvePlaces();
       this.recovered('geocoder', 'The address service of IGN answers again');
     } catch (err) {
       this.failed('geocoder', 'warn', `Address service unreachable: ${err.message}`);
-      result = previous ? { location: previous } : { problem: { key: 'geocoderDown' } };
+      result = previous
+        ? { places: previous, houseProblems: this.houseProblems }
+        : { problem: { key: 'geocoderDown' } };
     }
-    const before = this.location?.insee ?? null;
-    this.location = result.location ?? null;
+    const before = this.communes();
+    this.places = result.places ?? [];
     this.problem = result.problem ?? null;
+    this.houseProblems = result.houseProblems ?? {};
     this.locationKey = key;
-    if (this.location) {
-      this.location.city ??= this.data.city?.[this.location.insee] ?? null;
-      if (before !== null && before !== this.location.insee) {
-        logger.info(`The home is now in commune ${this.location.insee}`);
+    for (const place of this.places) {
+      place.city ??= this.data.city[place.insee] ?? null;
+    }
+    if (this.places.length > 0) {
+      this.forgetOtherCommunes();
+      if (before !== '' && before !== this.communes()) {
+        logger.info(`The home is now in ${this.describePlaces()}`);
       }
     }
   }
 
-  async resolveLocation() {
+  /**
+   * What is kept of a commune no longer followed: nothing. Coming back to it
+   * later starts again by learning its decrees, like a new commune.
+   */
+  forgetOtherCommunes() {
+    const followed = new Set(this.places.map((place) => place.insee));
+    for (const table of [this.data.reports, this.data.decrees, this.data.city]) {
+      for (const insee of Object.keys(table)) {
+        if (!followed.has(insee)) {
+          delete table[insee];
+        }
+      }
+    }
+  }
+
+  async resolvePlaces() {
     const { position, address, communeCode, communeInvalid } = this.config;
     if (position === 'commune') {
       if (communeInvalid) {
@@ -275,15 +293,15 @@ export class Monitor {
       if (!communeCode) {
         return { problem: { key: 'communeMissing' } };
       }
-      return {
-        location: {
-          insee: communeOfDistrict(communeCode),
-          radonInsee: communeCode,
-          city: null,
-          label: null,
-          position: null,
-        },
+      const place = {
+        insee: communeOfDistrict(communeCode),
+        radonInsee: communeCode,
+        city: null,
+        label: null,
+        position: null,
+        houses: [],
       };
+      return { places: [place] };
     }
     if (position === 'address') {
       if (!address) {
@@ -295,39 +313,113 @@ export class Monitor {
       }
       // A commune typed alone is found at its town hall: not the home.
       const precise = found.type !== 'municipality';
-      return {
-        location: {
-          insee: communeOfDistrict(found.citycode),
-          radonInsee: found.citycode,
-          city: found.city,
-          label: precise ? found.label : null,
-          position: precise ? { latitude: found.latitude, longitude: found.longitude } : null,
-        },
-      };
-    }
-    const { house, problem } = await this.findHouse();
-    if (!house) {
-      return { problem };
-    }
-    const found = await this.geocoder.reverse(house.latitude, house.longitude);
-    if (!found) {
-      return { problem: { key: 'outside' } };
-    }
-    return {
-      location: {
+      const place = {
         insee: communeOfDistrict(found.citycode),
+        radonInsee: found.citycode,
+        city: found.city,
+        label: precise ? found.label : null,
+        position: precise ? { latitude: found.latitude, longitude: found.longitude } : null,
+        houses: [],
+      };
+      return { places: [place] };
+    }
+    return this.resolveHouses();
+  }
+
+  /**
+   * The house chosen in the configuration, or else every house of Gladys
+   * that has a location (`getHouses()` sorts them by name): one place per
+   * commune, the first house of a commune giving its position.
+   */
+  async resolveHouses() {
+    let houses;
+    try {
+      houses = await this.gladys.getHouses();
+      this.recovered('houses', 'The houses of Gladys can be read again');
+    } catch (err) {
+      this.failed('houses', 'warn', `Cannot read the houses of Gladys: ${err.message}`);
+      return { problem: { key: 'noHouse' } };
+    }
+    const selector = this.config.houseSelector;
+    if (selector) {
+      const chosen = houses.find((house) => house.selector === selector);
+      if (!chosen) {
+        // Only the selector is left of a deleted house: it is the name shown.
+        return { problem: { key: 'houseGone', name: selector } };
+      }
+      if (!located(chosen)) {
+        return { problem: { key: 'houseUnlocated', name: chosen.name } };
+      }
+      houses = [chosen];
+    }
+    const places = [];
+    const houseProblems = {};
+    for (const house of houses) {
+      if (!located(house)) {
+        houseProblems[house.selector] = { key: 'houseUnlocated', name: house.name };
+        continue;
+      }
+      const found = await this.geocoder.reverse(house.latitude, house.longitude);
+      if (!found) {
+        houseProblems[house.selector] = { key: 'outside' };
+        continue;
+      }
+      const insee = communeOfDistrict(found.citycode);
+      const same = places.find((place) => place.insee === insee);
+      if (same) {
+        same.houses.push(house.selector);
+        continue;
+      }
+      places.push({
+        insee,
         radonInsee: found.citycode,
         city: found.city,
         label: found.label,
         position: { latitude: house.latitude, longitude: house.longitude },
-      },
-    };
+        houses: [house.selector],
+      });
+    }
+    if (places.length === 0) {
+      const problem = houses.some(located) ? { key: 'outside' } : { key: 'noHouse' };
+      return { problem, houseProblems };
+    }
+    return { places, houseProblems };
+  }
+
+  /**
+   * The place a widget shows, from its `house` setting: `{ location, problem }`.
+   * No house: the primary place. Another house of a shared commune gets the
+   * commune without its position: the clay and the Seveso sites within 5 km
+   * read at the first house of the commune are not its own.
+   */
+  placeOf(selector) {
+    if (!selector) {
+      return { location: this.location, problem: this.problem };
+    }
+    const place = this.places.find((entry) => entry.houses.includes(selector));
+    if (place) {
+      const location =
+        place.houses[0] === selector ? place : { ...place, label: null, position: null };
+      return { location, problem: null };
+    }
+    if (this.houseProblems[selector]) {
+      return { location: null, problem: this.houseProblems[selector] };
+    }
+    const { position, houseSelector } = this.config;
+    if (position === 'house' && !houseSelector) {
+      // Every house is followed: a house neither followed nor in trouble is gone.
+      return {
+        location: null,
+        problem: this.places.length > 0 ? { key: 'widgetHouseGone' } : this.problem,
+      };
+    }
+    return { location: null, problem: { key: 'notFollowed' } };
   }
 
   // --- Discovery and connection status -----------------------------------------
 
   discoveredDevices() {
-    return this.location ? [buildDevice(this.gladys, this.location, this.config.language)] : [];
+    return this.places.map((place) => buildDevice(this.gladys, place, this.config.language));
   }
 
   async publishDiscovered() {
@@ -343,8 +435,9 @@ export class Monitor {
     } else if (this.failing.has('geocoder')) {
       parts.push(render(STATUS, 'geocoderDown'));
     }
-    const report = this.report();
-    const failedParts = report?.failed ?? [];
+    const failedParts = [
+      ...new Set(this.places.flatMap((place) => this.reportOf(place.insee)?.failed ?? [])),
+    ];
     if (this.failing.has('georisques')) {
       parts.push(render(STATUS, 'georisquesDown'));
     } else if (failedParts.length > 0) {
@@ -364,7 +457,7 @@ export class Monitor {
       );
     }
     const message = parts.length > 0 ? join(...parts) : undefined;
-    const connected = Boolean(this.location) && !this.failing.has('georisques');
+    const connected = this.places.length > 0 && !this.failing.has('georisques');
     const key = JSON.stringify([connected, message]);
     if (key === this.statusKey) {
       return;
@@ -375,20 +468,18 @@ export class Monitor {
 
   // --- Gladys events -----------------------------------------------------------
 
-  /** The device of the current commune in Gladys, or undefined. */
-  device() {
-    if (!this.location) {
-      return undefined;
-    }
-    const id = communeIds(this.gladys, this.location.insee).device;
+  /** The device of a commune in Gladys, or undefined. */
+  deviceOf(insee) {
+    const id = communeIds(this.gladys, insee).device;
     return (this.gladys.devices ?? []).find((device) => device.external_id === id);
   }
 
   async onDeviceCreated(device) {
-    if (!inseeOfId(this.gladys, device.external_id)) {
+    const insee = inseeOfId(this.gladys, device.external_id);
+    if (!insee) {
       return;
     }
-    if (!this.report()) {
+    if (!this.reportOf(insee)) {
       await this.runCycle();
     }
     // The SDK forgot the states of the device: everything is published again.
@@ -424,18 +515,24 @@ export class Monitor {
     }
     await this.runCycle({ force });
     logger.info('Read now: Géorisques read again on request');
-    if (!this.location) {
+    if (this.places.length === 0) {
       const problem = this.problem ?? { key: 'geocoderDown' };
       return render(STATUS, problem.key, problem);
     }
-    const report = this.report();
-    if (!report || this.failing.has('georisques')) {
+    const reports = this.places.map((place) => this.reportOf(place.insee));
+    if (reports.some((report) => !report) || this.failing.has('georisques')) {
       return render(CHECK, 'unavailable');
     }
-    const commune = this.location.city
-      ? `${this.location.city} (${this.location.insee})`
-      : this.location.insee;
-    return render(CHECK, 'summary', { commune, count: report.parts.catnat?.count ?? 0 });
+    const names = this.places.map((place) =>
+      place.city ? `${place.city} (${place.insee})` : place.insee,
+    );
+    if (names.length === 1) {
+      return render(CHECK, 'summary', {
+        commune: names[0],
+        count: reports[0].parts.catnat?.count ?? 0,
+      });
+    }
+    return render(CHECK, 'several', { communes: names.join(', ') });
   }
 
   // --- Cycles ------------------------------------------------------------------
@@ -457,17 +554,21 @@ export class Monitor {
     return this.running;
   }
 
-  /** The report of the current commune, or null. */
+  /** The report of the primary place, or null. */
   report() {
-    const report = this.data.report;
-    return report && this.location && report.insee === this.location.insee ? report : null;
+    return this.location ? this.reportOf(this.location.insee) : null;
   }
 
-  /** Whether a read is due: the daily one, or a retry of the failed parts. */
-  readDue(now) {
-    const report = this.report();
+  /** The last report of a commune: `{ insee, parts, failed, readAt, triedAt }`, or null. */
+  reportOf(insee) {
+    return this.data.reports[insee] ?? null;
+  }
+
+  /** Whether a read of a place is due: the daily one, or a retry of the failed parts. */
+  readDue(place, now) {
+    const report = this.reportOf(place.insee);
     if (
-      this.fullReadDue(now) &&
+      this.fullReadDue(place, now) &&
       now - (report?.triedAt ?? -Infinity) >= this.timings.retryMs - MINUTE
     ) {
       return true;
@@ -475,20 +576,41 @@ export class Monitor {
     return Boolean(report?.failed.length) && now - report.triedAt >= this.timings.retryMs - MINUTE;
   }
 
+  /** Whether every part of a place is to be read again: once a day, or never read. */
+  fullReadDue(place, now) {
+    const readAt = this.reportOf(place.insee)?.readAt;
+    return !readAt || now - readAt >= this.timings.readEveryMs - MINUTE;
+  }
+
   async cycle({ force = false } = {}) {
     const now = this.now();
     const configChanged = this.locationKey !== this.configKey();
-    const fullDue = this.fullReadDue(now);
+    const fullDue = this.places.some((place) => this.fullReadDue(place, now));
     if (
       force ||
       configChanged ||
-      (this.location ? fullDue : now - this.lastLocateAt >= this.timings.retryMs - MINUTE)
+      (this.places.length > 0 ? fullDue : now - this.lastLocateAt >= this.timings.retryMs - MINUTE)
     ) {
       await this.locate();
     }
     let changed = false;
-    if (this.location && (force || configChanged || this.readDue(now))) {
-      changed = await this.read({ full: force || configChanged || this.fullReadDue(now) });
+    const outcomes = [];
+    for (const place of this.places) {
+      if (force || configChanged || this.readDue(place, now)) {
+        const full = force || configChanged || this.fullReadDue(place, now);
+        const outcome = await this.read(place, { full });
+        changed ||= outcome.changed;
+        outcomes.push(outcome);
+      }
+    }
+    // Géorisques is down when no read of this tick got anything back.
+    if (outcomes.length > 0) {
+      const down = outcomes.find((outcome) => outcome.down);
+      if (down && outcomes.every((outcome) => outcome.down)) {
+        this.failed('georisques', 'warn', `Géorisques unreachable: ${down.error.message}`);
+      } else {
+        this.recovered('georisques', 'Géorisques answers again');
+      }
     }
     if (this.discoveredKey !== JSON.stringify(this.discoveredDevices())) {
       await this.publishDiscovered();
@@ -501,26 +623,20 @@ export class Monitor {
     }
   }
 
-  /** Whether every part is to be read again: once a day, or never read. */
-  fullReadDue(now) {
-    const readAt = this.report()?.readAt;
-    return !readAt || now - readAt >= this.timings.readEveryMs - MINUTE;
-  }
-
   /**
-   * Read Géorisques for the current location: every part (`full`), or only
-   * the ones that failed last time. Resolves true when a value changed.
+   * Read Géorisques for one place: every part (`full`), or only the ones that
+   * failed last time. Resolves `{ changed, down, error }`: whether a value
+   * changed, whether nothing came back at all, and the first error.
    */
-  async read({ full }) {
-    const location = this.location;
+  async read(place, { full }) {
     const now = this.now();
-    let report = this.report();
+    let report = this.reportOf(place.insee);
     if (!report) {
-      report = { insee: location.insee, parts: {}, failed: [], readAt: null, triedAt: null };
-      this.data.report = report;
+      report = { insee: place.insee, parts: {}, failed: [], readAt: null, triedAt: null };
+      this.data.reports[place.insee] = report;
       full = true;
     }
-    if (!location.position) {
+    if (!place.position) {
       // Values of a former position (clay, Seveso nearby) do not apply any more.
       for (const part of POSITION_PARTS) {
         delete report.parts[part];
@@ -529,7 +645,7 @@ export class Monitor {
     const before = JSON.stringify(report.parts);
     const { parts, errors, name } = await readReport(
       this.georisques,
-      location,
+      place,
       full ? null : report.failed,
     );
     report.triedAt = now;
@@ -538,34 +654,33 @@ export class Monitor {
     if (full && Object.keys(parts).length > 0) {
       report.readAt = now;
     }
-    if (errors.length > 0 && Object.keys(parts).length === 0) {
-      this.failed('georisques', 'warn', `Géorisques unreachable: ${errors[0].error.message}`);
-    } else {
-      this.recovered('georisques', 'Géorisques answers again');
-    }
     for (const { part, error } of errors) {
       logger.debug(`Géorisques ${part} unavailable: ${error.message}`);
     }
-    if (name && !location.city) {
-      location.city = name;
+    if (name && !place.city) {
+      place.city = name;
     }
-    if (location.city) {
-      this.data.city = { [location.insee]: location.city };
+    if (place.city) {
+      this.data.city[place.insee] = place.city;
     }
     if (parts.catnat) {
-      await this.noteDecrees(location, parts.catnat.decrees);
+      await this.noteDecrees(place, parts.catnat.decrees);
     }
     logger.debug(
-      `Géorisques read for ${location.insee}: ${Object.keys(parts).length} part(s), ${errors.length} failed`,
+      `Géorisques read for ${place.insee}: ${Object.keys(parts).length} part(s), ${errors.length} failed`,
     );
-    return JSON.stringify(report.parts) !== before;
+    return {
+      changed: JSON.stringify(report.parts) !== before,
+      down: errors.length > 0 && Object.keys(parts).length === 0,
+      error: errors[0]?.error ?? null,
+    };
   }
 
   /** Fire the trigger for the decrees not seen in the previous read of the commune. */
   async noteDecrees(location, decrees) {
     const codes = decrees.map((decree) => decree.code);
-    const known = this.data.decrees?.insee === location.insee ? this.data.decrees.codes : null;
-    this.data.decrees = { insee: location.insee, codes };
+    const known = this.data.decrees[location.insee] ?? null;
+    this.data.decrees[location.insee] = codes;
     if (!known) {
       return;
     }
@@ -606,15 +721,19 @@ export class Monitor {
 
   // --- States ------------------------------------------------------------------
 
-  /** The states of the device of the commune, when it exists in Gladys. */
+  /** The states of the devices of the places, for those that exist in Gladys. */
   statesOf() {
-    const device = this.device();
-    const report = this.report();
+    return this.places.flatMap((place) => this.statesOfPlace(place));
+  }
+
+  statesOfPlace(place) {
+    const device = this.deviceOf(place.insee);
+    const report = this.reportOf(place.insee);
     if (!device || !report) {
       return [];
     }
     const has = new Set((device.features ?? []).map((feature) => feature.external_id));
-    const ids = communeIds(this.gladys, this.location.insee);
+    const ids = communeIds(this.gladys, place.insee);
     const language = this.config.language;
     const { parts } = report;
     const states = [];
@@ -628,7 +747,7 @@ export class Monitor {
         states.push({ device_feature_external_id: ids[key], text: value });
       }
     };
-    if (this.location.position) {
+    if (place.position) {
       number(FEATURE_KEYS.CLAY, parts.clay?.level);
       number(FEATURE_KEYS.SEVESO_NEARBY, parts.sevesoNearby);
     }
@@ -685,12 +804,40 @@ export class Monitor {
 
 function emptyData() {
   return {
-    version: 1,
-    // The last report: `{ insee, parts, failed, readAt, triedAt }`.
-    report: null,
-    // The decrees already seen: `{ insee, codes }`.
-    decrees: null,
-    // The name of the commune, by INSEE code (one entry).
+    version: 2,
+    // The last report of each followed commune, by INSEE code:
+    // `{ insee, parts, failed, readAt, triedAt }`.
+    reports: {},
+    // The decrees already seen, by INSEE code: their codes.
+    decrees: {},
+    // The name of each followed commune, by INSEE code.
     city: {},
   };
+}
+
+/**
+ * The saved file. Version 1 (one commune: `report`, `decrees: { insee, codes }`)
+ * is carried over, so an update neither reads again at once nor forgets the
+ * decrees already seen.
+ */
+export function loadData(saved) {
+  const data = emptyData();
+  if (saved?.version === 2) {
+    for (const key of ['reports', 'decrees', 'city']) {
+      if (isObject(saved[key])) {
+        data[key] = saved[key];
+      }
+    }
+  } else if (saved?.version === 1) {
+    if (isObject(saved.report) && saved.report.insee) {
+      data.reports[saved.report.insee] = saved.report;
+    }
+    if (saved.decrees?.insee && Array.isArray(saved.decrees.codes)) {
+      data.decrees[saved.decrees.insee] = saved.decrees.codes;
+    }
+    if (isObject(saved.city)) {
+      data.city = saved.city;
+    }
+  }
+  return data;
 }

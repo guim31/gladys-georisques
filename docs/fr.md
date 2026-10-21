@@ -54,7 +54,7 @@ démarrage et quand vous enregistrez la configuration. Pas de flot de requêtes.
 | Réglage                            | Ce qu'il fait                                                                                                                                                                    |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Position                           | **Ma maison dans Gladys** (par défaut), **Une adresse** ou **Une commune (code INSEE)**.                                                                                         |
-| Maison                             | La maison dont la position compte, si vous en avez plusieurs. Vide : la première maison de Gladys qui a une position.                                                            |
+| Maison                             | Vide (par défaut) : **toutes les maisons de Gladys qui ont une position** sont suivies, un appareil par commune (voir plus bas). Une maison : celle-là seulement.                |
 | Adresse                            | Numéro, rue et commune, comme sur une enveloppe : `12 rue de la Mairie, 31000 Toulouse`. Le nom d'une commune seul fonctionne aussi, mais sans position précise (voir plus bas). |
 | Code INSEE de la commune           | 5 caractères, **ce n'est pas le code postal** : `31555` pour Toulouse, `2A004` pour Ajaccio. Il figure sur votre avis de taxe foncière ou sur le site de l'Insee.                |
 | Langue des noms de fonctionnalités | Noms des fonctionnalités du nouvel appareil, langue de ses textes (inondation, dernière catastrophe) et des variables du déclencheur. Français par défaut.                       |
@@ -69,6 +69,22 @@ pas de la commune.
 À Paris, Lyon et Marseille, l'appareil est celui de la commune (75056, 69123, 13055), là où
 Géorisques range les arrêtés et les plans ; le radon est lu pour votre arrondissement quand la
 position ou l'adresse le donne.
+
+### Plusieurs maisons
+
+Avec le réglage Maison vide, l'intégration suit **toutes les maisons de Gladys qui ont une
+position** : une maison à Toulouse et une maison de vacances en Bretagne donnent deux appareils,
+« Risques de ma commune (Toulouse) » et « Risques de ma commune (Plouharnel) », chacun avec ses
+valeurs. Une maison sans position est ignorée ; une maison ajoutée ou positionnée plus tard est
+suivie à la lecture quotidienne suivante, ou tout de suite si vous enregistrez la configuration.
+
+**Deux maisons de la même commune partagent un appareil** : l'appareil est celui de la commune,
+et la commune n'est lue qu'une fois. Son exposition aux argiles et ses sites Seveso à moins de
+5 km, qui dépendent de l'endroit exact, sont lus à la **première de ces maisons** dans l'ordre
+alphabétique. Le widget de l'autre maison montre la commune sans ces deux lignes.
+
+Avec une seule maison, rien ne change. Pour ne suivre qu'une maison parmi plusieurs, choisissez-la
+dans le réglage Maison.
 
 ### Vérifier : « Lire maintenant »
 
@@ -124,6 +140,12 @@ Il se termine par la source et la date de la lecture, et un bouton **Rapport Gé
 ouvre le rapport « Connaître les risques près de chez moi » de votre adresse (ou de votre
 commune) sur georisques.gouv.fr, avec le détail et les cartes.
 
+**Plusieurs maisons** : le widget a un réglage **Maison**. Mettez un widget par maison sur vos
+tableaux de bord et choisissez sa maison dans chacun ; vide, le widget montre le lieu de la
+configuration (avec plusieurs maisons, la première dans l'ordre alphabétique). Un widget dont la
+maison n'est pas suivie (sans position, ou configuration sur une adresse, une commune ou une
+autre maison) le dit.
+
 ## Déclencheur de scène
 
 **Nouvel arrêté de catastrophe naturelle** : l'État a reconnu l'état de catastrophe naturelle
@@ -166,9 +188,9 @@ au plus cinq fois par lecture.
   d'utilisation de georisques.gouv.fr : le widget cite Géorisques et la date de lecture.
 - **Service d'adresses de l'IGN** (Géoplateforme, `data.geopf.fr/geocodage`), qui a pris la
   suite de l'API Adresse (Base Adresse Nationale) : il donne la commune d'une position ou d'une
-  adresse. Une requête par jour.
+  adresse. Une requête par jour (par maison suivie).
 - Aucun quota n'est publié pour l'API v1 de Géorisques. L'intégration reste légère : une
-  lecture par jour, soit environ 14 requêtes espacées de 0,3 seconde, et une nouvelle tentative
+  lecture par jour et par commune suivie, soit environ 14 requêtes espacées de 0,3 seconde, et une nouvelle tentative
   par heure pour la seule partie qui aurait échoué. Elle se nomme dans ses requêtes. Ne
   multipliez pas les « Lire maintenant ».
 
@@ -190,6 +212,8 @@ au plus cinq fois par lecture.
 - **Pas de fonctionnalité « Retrait-gonflement des argiles »** : l'appareil a été créé avec un
   code INSEE. Passez à une maison ou une adresse, puis mettez l'appareil à jour dans l'onglet
   Découverte.
+- **Trois maisons, et tous les widgets montrent la même commune** : donnez sa maison à chaque
+  widget dans ses réglages, et laissez vide le réglage Maison de la configuration.
 - **Journaux** : calmes par défaut (démarrage, changement de commune, nouvel arrêté, « Lire
   maintenant », pannes une seule fois). `LOG_LEVEL=debug` montre chaque lecture. Ni la position
   ni l'adresse n'y sont jamais écrites.

@@ -187,8 +187,9 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
   sont absents de la 5.1.4 mais **livrés dans la 5.2.0** (sortie le 12/10/2026) : `gladys_version`
   `>=5.2.0` si on s'en sert, ou un bouton direct en repli. Vérifier par `git tag --contains`.
 
-- Un réglage de widget ne propose en liste que les **appareils** de l'intégration
-  (`source: "devices"`, seule source dynamique).
+- Un réglage de widget propose en liste les **appareils** de l'intégration (`source: "devices"`)
+  ou, depuis la 5.2.0, les **maisons** de Gladys (`source: "houses"`, valeur = `selector`) :
+  vérifié dans `validateWidgetSettings` et `EditExternalWidgetBox` du cœur v5.2.1.
 - Budget du cœur : **8 composants par widget, dont 2 textes au plus**, appliqué **avant** la
   résolution des références ; un contenu amputé reste en cache jusqu'au TTL. Appeler
   `requestWidgetRefresh` à la création d'un appareil. `validateWidgetContent` est exporté pour les
@@ -275,8 +276,12 @@ codeExposition }`. `results` est le total : un comptage = une requête `page_siz
   (1-5), chiffre officiel. Les comptages en `counter-sensor/integer` (0 … 100 000).
   L'inondation et le dernier arrêté en `text/text`.
 - **Appareil** : un par commune, identifiant externe = **code INSEE** (déménager crée un nouvel
-  appareil). Argiles et Seveso à 5 km n'existent qu'avec une position (maison ou adresse
-  précise) ; une adresse réduite à un nom de commune (`type: municipality`) n'est pas une
+  appareil). **Plusieurs maisons** (t/11313) : sans maison choisie, toutes les maisons
+  positionnées sont suivies, une par commune ; deux maisons d'une commune partagent l'appareil, dont
+  argiles et Seveso à 5 km viennent de la première par ordre alphabétique (le widget de l'autre
+  maison les masque). Réglage `house` du widget (`source: "houses"`). Fichier `/data` en version 2
+  (`reports`/`decrees` par INSEE), la version 1 est reprise par `loadData`. Argiles et Seveso
+  à 5 km n'existent qu'avec une position (maison ou adresse précise) ; une adresse réduite à un nom de commune (`type: municipality`) n'est pas une
   position (mairie).
 - **Déclencheur `catnat_decree`** : un code d'arrêté absent de la lecture précédente de la même
   commune, publié il y a moins de 180 jours, cinq au plus par lecture ; la première lecture
