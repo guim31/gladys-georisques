@@ -34,7 +34,8 @@ User documentation: [English](docs/en.md) · [Français](docs/fr.md) · [Deutsch
   the address.
 - A **Read now** button in the configuration, to check which commune is found.
 - The home is a **house of Gladys** (its location), an **address**, or a commune by its **INSEE
-  code**. Feature names and texts in English, French, German or Spanish (French by default).
+  code**. With no house chosen, **every house of Gladys that has a location** is followed: one
+  device per commune, and a widget setting to pick the house shown. Feature names and texts in English, French, German or Spanish (French by default).
 
 ## Requirements
 
@@ -56,8 +57,8 @@ tab. Add the **Géorisques** widget to a dashboard if you like.
   `zonage_sismique`, `rga` (clay, at a point), `gaspar/catnat` (every page), `ppr` (flood plans,
   `code_risque=11`, not repealed), `gaspar/tri`, `installations_classees` (all, then
   `statutSeveso=1` and `2`, in the commune and within 5 km), `cavites`, `mvt`. Counts cost one
-  request each (`page_size=1`, the `results` of the envelope). About 14 requests a day, 0.3 s
-  apart.
+  request each (`page_size=1`, the `results` of the envelope). About 14 requests a day per
+  commune followed, 0.3 s apart.
 - **Géoplateforme geocoding** (`data.geopf.fr/geocodage`, successor of the Adresse API): reverse
   geocoding of the house location, or search of the address typed, to get the INSEE code. The
   arrondissements of Paris, Lyon and Marseille are filed under their commune (Géorisques does

@@ -137,10 +137,10 @@
         "es": "Casa"
       },
       "description": {
-        "en": "Empty: the first house of Gladys that has a location.",
-        "fr": "Vide : la première maison de Gladys qui a une position.",
-        "de": "Leer: das erste Haus in Gladys mit einem Standort.",
-        "es": "Vacío: la primera casa de Gladys que tiene ubicación."
+        "en": "Empty: every house of Gladys that has a location, one device per commune. A house: that one only.",
+        "fr": "Vide : toutes les maisons de Gladys qui ont une position, un appareil par commune. Une maison : elle seule.",
+        "de": "Leer: alle Häuser in Gladys mit Standort, ein Gerät pro Gemeinde. Ein Haus: nur dieses.",
+        "es": "Vacío: todas las casas de Gladys con ubicación, un dispositivo por municipio. Una casa: solo esa."
       },
       "required": false
     },
@@ -468,7 +468,27 @@
         "de": "Die Risiken deiner Gemeinde auf einen Blick: Ton, Radon, Erdbeben, Hochwasser, Anlagen.",
         "es": "Los riesgos de su municipio de un vistazo: arcillas, radón, sismo, inundación, sitios."
       },
-      "icon": "shield"
+      "icon": "shield",
+      "settings": [
+        {
+          "key": "house",
+          "type": "select",
+          "source": "houses",
+          "label": {
+            "en": "House",
+            "fr": "Maison",
+            "de": "Haus",
+            "es": "Casa"
+          },
+          "description": {
+            "en": "The house whose risks are shown. Empty: the location of the configuration, or the first house followed.",
+            "fr": "La maison dont les risques sont affichés. Vide : le lieu de la configuration, ou la première maison suivie.",
+            "de": "Das Haus, dessen Risiken angezeigt werden. Leer: der Ort der Konfiguration oder das erste verfolgte Haus.",
+            "es": "La casa cuyos riesgos se muestran. Vacío: el lugar de la configuración o la primera casa seguida."
+          },
+          "required": false
+        }
+      ]
     }
   ]
 }

@@ -54,7 +54,7 @@ guarda la configuración. Sin avalancha de peticiones.
 | Ajuste                                 | Qué hace                                                                                                                                                                    |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ubicación                              | **Mi casa en Gladys** (por defecto), **Una dirección** o **Un municipio (código INSEE)**.                                                                                   |
-| Casa                                   | La casa cuya ubicación cuenta, si tiene varias. Vacío: la primera casa de Gladys que tiene ubicación.                                                                       |
+| Casa                                   | Vacío (por defecto): se siguen **todas las casas de Gladys que tienen ubicación**, un dispositivo por municipio (ver más abajo). Una casa: solo esa.                        |
 | Dirección                              | Número, calle y municipio, como en un sobre: `12 rue de la Mairie, 31000 Toulouse`. El nombre de un municipio solo también funciona, pero sin posición precisa (ver abajo). |
 | Código INSEE del municipio             | 5 caracteres, **no es el código postal**: `31555` para Toulouse, `2A004` para Ajaccio. Figura en el aviso del impuesto sobre bienes inmuebles o en el sitio del Insee.      |
 | Idioma de los nombres de las funciones | Nombres de las funciones del nuevo dispositivo, idioma de sus textos (inundación, última catástrofe) y de las variables del disparador. Francés por defecto.                |
@@ -69,6 +69,22 @@ no del municipio.
 En París, Lyon y Marsella, el dispositivo es el del municipio (75056, 69123, 13055), donde
 Géorisques archiva los decretos y los planes; el radón se lee para su distrito cuando la
 posición o la dirección lo indican.
+
+### Varias casas
+
+Con el ajuste Casa vacío, la integración sigue **todas las casas de Gladys que tienen
+ubicación**: una casa en Toulouse y una casa de vacaciones en Bretaña dan dos dispositivos,
+«Riesgos de mi municipio (Toulouse)» y «Riesgos de mi municipio (Plouharnel)», cada uno con sus
+valores. Una casa sin ubicación se omite; una casa añadida o ubicada más tarde se sigue en la
+siguiente lectura diaria, o enseguida si guarda la configuración.
+
+**Dos casas del mismo municipio comparten un dispositivo**: el dispositivo es el del municipio,
+y el municipio se lee una sola vez. Su exposición a las arcillas y sus sitios Seveso a menos de
+5 km, que dependen del lugar exacto, se leen en la **primera de esas casas** por orden
+alfabético. El widget de la otra casa muestra el municipio sin esas dos líneas.
+
+Con una sola casa, nada cambia. Para seguir solo una casa entre varias, elíjala en el ajuste
+Casa.
 
 ### Comprobar: «Leer ahora»
 
@@ -123,6 +139,11 @@ Termina con la fuente y la fecha de la lectura, y un botón **Informe Géorisque
 informe «Conocer los riesgos cerca de mí» de su dirección (o de su municipio) en
 georisques.gouv.fr, con el detalle y los mapas.
 
+**Varias casas**: el widget tiene un ajuste **Casa**. Ponga un widget por casa en sus paneles y
+elija su casa en cada uno; vacío, el widget muestra el lugar de la configuración (con varias
+casas, la primera por orden alfabético). Un widget cuya casa no se sigue (sin ubicación, o la
+configuración lee una dirección, un municipio u otra casa) lo indica.
+
 ## Disparador de escena
 
 **Nuevo decreto de catástrofe natural**: el Estado ha reconocido el estado de catástrofe natural
@@ -165,9 +186,9 @@ máximo cinco veces por lectura.
   de georisques.gouv.fr: el widget cita Géorisques y la fecha de lectura.
 - **Servicio de direcciones del IGN** (Géoplateforme, `data.geopf.fr/geocodage`), sucesor de la
   API Adresse (Base Adresse Nationale): da el municipio de una posición o de una dirección. Una
-  petición al día.
+  petición al día (por casa seguida).
 - No hay ninguna cuota publicada para la API v1 de Géorisques. La integración es ligera: una
-  lectura al día, unas 14 peticiones separadas 0,3 segundos, y un nuevo intento por hora solo
+  lectura al día por municipio seguido, unas 14 peticiones separadas 0,3 segundos, y un nuevo intento por hora solo
   para la parte que haya fallado. Se identifica en sus peticiones. No pulse «Leer ahora» una y
   otra vez.
 
@@ -188,6 +209,8 @@ máximo cinco veces por lectura.
   municipio.
 - **Sin la función «Retracción-hinchamiento de arcillas»**: el dispositivo se creó con un código
   INSEE. Pase a una casa o una dirección y actualice el dispositivo en la pestaña Descubrir.
+- **Tres casas, y todos los widgets muestran el mismo municipio**: asigne su casa a cada
+  widget en sus ajustes, y deje vacío el ajuste Casa de la configuración.
 - **Registros**: tranquilos por defecto (arranque, cambio de municipio, nuevo decreto, «Leer
   ahora», fallos una sola vez). `LOG_LEVEL=debug` muestra cada lectura. Nunca se escriben en
   ellos ni la posición ni la dirección.

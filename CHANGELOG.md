@@ -10,6 +10,19 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Added
+
+- Several houses: with no house chosen in the configuration, every house of
+  Gladys that has a location is followed, one device per commune, each read
+  once a day. Two houses in the same commune share its device; its clay
+  exposure and Seveso sites within 5 km are read at the first of them, in
+  alphabetical order. With one house, nothing changes. **If you have several
+  located houses and left the House field empty**, you now get one device per
+  commune (to create in the Discover tab) and one Géorisques read a day per
+  commune instead of one: choose a house in the configuration to keep a single
+  one.
+- A **House** setting on the widget, to show the risks of one house per widget.
+
 ## [1.0.2] - 2026-10-16
 
 ### Fixed

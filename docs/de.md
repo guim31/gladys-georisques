@@ -56,7 +56,7 @@ und wenn du die Konfiguration speicherst. Keine Flut von Anfragen.
 | Einstellung                | Was sie tut                                                                                                                                                                 |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Standort                   | **Mein Haus in Gladys** (Standard), **Eine Adresse** oder **Eine Gemeinde (INSEE-Code)**.                                                                                   |
-| Haus                       | Das Haus, dessen Standort zählt, wenn du mehrere hast. Leer: das erste Haus in Gladys mit einem Standort.                                                                   |
+| Haus                       | Leer (Standard): **alle Häuser in Gladys mit Standort** werden verfolgt, ein Gerät pro Gemeinde (siehe unten). Ein Haus: nur dieses.                                        |
 | Adresse                    | Hausnummer, Straße und Gemeinde, wie auf einem Umschlag: `12 rue de la Mairie, 31000 Toulouse`. Ein Gemeindename allein geht auch, aber ohne genaue Position (siehe unten). |
 | INSEE-Code der Gemeinde    | 5 Zeichen, **nicht die Postleitzahl**: `31555` für Toulouse, `2A004` für Ajaccio. Er steht auf dem Grundsteuerbescheid oder auf der Website des Insee.                      |
 | Sprache der Funktionsnamen | Namen der Funktionen des neuen Geräts, Sprache seiner Texte (Hochwasser, letzte Katastrophe) und der Variablen des Auslösers. Standardmäßig Französisch.                    |
@@ -71,6 +71,22 @@ Zuhauses ab, nicht von der Gemeinde.
 In Paris, Lyon und Marseille ist das Gerät das der Gemeinde (75056, 69123, 13055), unter der
 Géorisques die Erlasse und Pläne ablegt; das Radon wird für dein Arrondissement gelesen, wenn
 die Position oder die Adresse es angibt.
+
+### Mehrere Häuser
+
+Ist die Einstellung Haus leer, verfolgt die Integration **alle Häuser in Gladys mit Standort**:
+ein Haus in Toulouse und ein Ferienhaus in der Bretagne ergeben zwei Geräte, „Risiken meiner
+Gemeinde (Toulouse)“ und „Risiken meiner Gemeinde (Plouharnel)“, jedes mit seinen eigenen
+Werten. Ein Haus ohne Standort wird übergangen; ein später hinzugefügtes oder verortetes Haus
+wird beim nächsten täglichen Lesen verfolgt, oder sofort, wenn du die Konfiguration speicherst.
+
+**Zwei Häuser in derselben Gemeinde teilen sich ein Gerät**: Das Gerät gehört zur Gemeinde, und
+die Gemeinde wird nur einmal gelesen. Die Ton-Exposition und die Seveso-Betriebe im Umkreis
+von 5 km, die vom genauen Ort abhängen, werden am **ersten dieser Häuser** in alphabetischer
+Reihenfolge gelesen. Das Widget des anderen Hauses zeigt die Gemeinde ohne diese zwei Zeilen.
+
+Mit einem einzigen Haus ändert sich nichts. Um nur ein Haus von mehreren zu verfolgen, wähle es
+in der Einstellung Haus.
 
 ### Prüfen: „Jetzt lesen“
 
@@ -125,6 +141,12 @@ Es endet mit der Quelle und dem Datum des Lesens sowie einem Knopf **Géorisques
 den Bericht „Die Risiken in meiner Nähe kennen“ deiner Adresse (oder deiner Gemeinde) auf
 georisques.gouv.fr öffnet, mit den Details und den Karten.
 
+**Mehrere Häuser**: Das Widget hat eine Einstellung **Haus**. Lege pro Haus ein Widget auf
+deine Dashboards und wähle in jedem sein Haus; leer zeigt das Widget den Ort der Konfiguration
+(bei mehreren Häusern das erste in alphabetischer Reihenfolge). Ein Widget, dessen Haus nicht
+verfolgt wird (ohne Standort, oder die Konfiguration liest eine Adresse, eine Gemeinde oder ein
+anderes Haus), sagt es.
+
 ## Szenen-Auslöser
 
 **Neuer Naturkatastrophen-Erlass**: Der Staat hat für deine Gemeinde eine Naturkatastrophe
@@ -166,9 +188,9 @@ höchstens fünfmal pro Lesen.
   und das Datum des Lesens.
 - **Adressdienst des IGN** (Géoplateforme, `data.geopf.fr/geocodage`), Nachfolger der
   Adresse-API (Base Adresse Nationale): Er liefert die Gemeinde einer Position oder einer
-  Adresse. Eine Anfrage am Tag.
+  Adresse. Eine Anfrage am Tag (pro verfolgtem Haus).
 - Für die API v1 von Géorisques ist kein Kontingent veröffentlicht. Die Integration bleibt
-  sparsam: einmal Lesen am Tag, etwa 14 Anfragen im Abstand von 0,3 Sekunden, und ein neuer
+  sparsam: einmal Lesen am Tag pro verfolgter Gemeinde, etwa 14 Anfragen im Abstand von 0,3 Sekunden, und ein neuer
   Versuch pro Stunde nur für den Teil, der fehlgeschlagen ist. Die Integration nennt sich in ihren Anfragen.
   Drück „Jetzt lesen“ nicht ständig.
 
@@ -191,6 +213,8 @@ höchstens fünfmal pro Lesen.
 - **Keine Funktion „Quellen und Schrumpfen von Ton“**: Das Gerät wurde mit einem INSEE-Code
   angelegt. Wechsle zu einem Haus oder einer Adresse und aktualisiere das Gerät dann im Tab
   „Entdecken“.
+- **Drei Häuser, und alle Widgets zeigen dieselbe Gemeinde**: Gib jedem Widget in seinen
+  Einstellungen sein Haus, und lass die Einstellung Haus der Konfiguration leer.
 - **Protokolle**: standardmäßig ruhig (Start, Gemeindewechsel, neuer Erlass, „Jetzt lesen“,
   Störungen nur einmal). `LOG_LEVEL=debug` zeigt jedes Lesen. Weder die Position noch die
   Adresse werden je dort geschrieben.

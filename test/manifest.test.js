@@ -136,11 +136,15 @@ test('section fields are purely presentational', () => {
   }
 });
 
-test('the only dynamic select is the house, without options nor default', () => {
+test('the only dynamic selects are the houses, without options nor default', () => {
   const dynamic = allFields.filter((entry) => entry.source !== undefined);
+  // The house of the configuration, then the house of the widget.
   assert.deepEqual(
     dynamic.map((entry) => [entry.key, entry.source]),
-    [['house', 'houses']],
+    [
+      ['house', 'houses'],
+      ['house', 'houses'],
+    ],
   );
   for (const entry of dynamic) {
     assert.equal(entry.options, undefined, entry.key);

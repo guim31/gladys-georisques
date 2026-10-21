@@ -255,21 +255,29 @@ export const CHECK = {
     summary: ({ commune, count }) =>
       `${commune}: read now. ${count} natural disaster decree(s) since 1982. Create or update the device in the Discover tab.`,
     unavailable: 'Géorisques does not answer, try again in a few minutes.',
+    several: ({ communes }) =>
+      `${communes}: read now. Create or update the devices in the Discover tab.`,
   },
   fr: {
     summary: ({ commune, count }) =>
       `${commune} : lu à l'instant. ${count} arrêté(s) de catastrophe naturelle depuis 1982. Créez ou mettez à jour l'appareil dans l'onglet Découverte.`,
     unavailable: 'Géorisques ne répond pas, réessayez dans quelques minutes.',
+    several: ({ communes }) =>
+      `${communes} : lu à l'instant. Créez ou mettez à jour les appareils dans l'onglet Découverte.`,
   },
   de: {
     summary: ({ commune, count }) =>
       `${commune}: gerade gelesen. ${count} Naturkatastrophen-Erlass(e) seit 1982. Lege das Gerät im Tab „Entdecken“ an oder aktualisiere es.`,
     unavailable: 'Géorisques antwortet nicht, versuche es in ein paar Minuten erneut.',
+    several: ({ communes }) =>
+      `${communes}: gerade gelesen. Lege die Geräte im Tab „Entdecken“ an oder aktualisiere sie.`,
   },
   es: {
     summary: ({ commune, count }) =>
       `${commune}: leído ahora. ${count} decreto(s) de catástrofe natural desde 1982. Cree o actualice el dispositivo en la pestaña Descubrir.`,
     unavailable: 'Géorisques no responde, inténtelo de nuevo en unos minutos.',
+    several: ({ communes }) =>
+      `${communes}: leído ahora. Cree o actualice los dispositivos en la pestaña Descubrir.`,
   },
 };
 
