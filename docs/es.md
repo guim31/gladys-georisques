@@ -53,7 +53,7 @@ guarda la configuración. Sin avalancha de peticiones.
 
 | Ajuste                                 | Qué hace                                                                                                                                                                    |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ubicación                              | **Mi casa en Gladys** (por defecto), **Una dirección** o **Un municipio (código INSEE)**.                                                                                   |
+| Ubicación                              | **Mi casa en Gladys** (por defecto), **Todas mis casas en Gladys**, **Una dirección** o **Un municipio (código INSEE)**.                                                    |
 | Casa                                   | Vacío (por defecto): se siguen **todas las casas de Gladys que tienen ubicación**, un dispositivo por municipio (ver más abajo). Una casa: solo esa.                        |
 | Dirección                              | Número, calle y municipio, como en un sobre: `12 rue de la Mairie, 31000 Toulouse`. El nombre de un municipio solo también funciona, pero sin posición precisa (ver abajo). |
 | Código INSEE del municipio             | 5 caracteres, **no es el código postal**: `31555` para Toulouse, `2A004` para Ajaccio. Figura en el aviso del impuesto sobre bienes inmuebles o en el sitio del Insee.      |
@@ -84,7 +84,8 @@ y el municipio se lee una sola vez. Su exposición a las arcillas y sus sitios S
 alfabético. El widget de la otra casa muestra el municipio sin esas dos líneas.
 
 Con una sola casa, nada cambia. Para seguir solo una casa entre varias, elíjala en el ajuste
-Casa.
+Casa. Para volver después a todas las casas, elija la ubicación **Todas mis casas en Gladys**:
+Gladys 5.2.1 no guarda un ajuste Casa vuelto a dejar vacío (error al guardar la configuración).
 
 ### Comprobar: «Leer ahora»
 

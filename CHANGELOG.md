@@ -10,6 +10,14 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Several houses: Gladys 5.2.1 refuses to save the House field set back to
+  empty ("An error occurred while saving the configuration"), so after choosing
+  one house there was no way back to every house. A new **All my houses in
+  Gladys** location follows every house of Gladys that has a location, whatever
+  the House field holds.
+
 ## [1.1.0] - 2026-10-21
 
 ### Added

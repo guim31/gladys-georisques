@@ -312,3 +312,24 @@ test('the widget of the configured house says why it is not shown', async (t) =>
     /La maison « grenier » n'existe plus dans Gladys : choisissez-en une autre dans la configuration/,
   );
 });
+
+// Gladys 5.2.1 refuses to save an emptied House field (forum t/11313/8: "Une
+// erreur s'est produite lors de l'enregistrement de la configuration"): the
+// "All my houses" position follows every house, whatever the field holds.
+test('"All my houses": every located house again, though a house is still chosen', async (t) => {
+  const world = await createWorld({ houses: HOUSES, config: { house: 'maison' } });
+  t.after(() => world.app.stop());
+  assert.deepEqual(
+    world.fake.discoveredDevices.map((device) => device.external_id),
+    [`ext:test-integration:commune:${CHEVILLY}`],
+  );
+  // The core sends the whole configuration back; the House field keeps its value.
+  await world.fake.configUpdated({ position: 'houses', house: 'maison', address: '', commune: '' });
+  assert.deepEqual(world.monitor.config.position, 'house');
+  assert.equal(world.monitor.config.houseSelector, null);
+  assert.deepEqual(
+    world.fake.discoveredDevices.map((device) => device.name),
+    ['Risques de ma commune (Paris)', 'Risques de ma commune (Chevilly-Larue)'],
+  );
+  assert.deepEqual(world.fake.connectionStatus, { connected: true });
+});

@@ -6,9 +6,13 @@
 
 export const LANGUAGES = ['en', 'fr', 'de', 'es'];
 
-// Where the risks are read: the location of a house of Gladys, a postal
-// address, or a commune by its INSEE code.
-export const POSITIONS = ['house', 'address', 'commune'];
+// Where the risks are read: the location of a house of Gladys, of every house
+// of Gladys, a postal address, or a commune by its INSEE code.
+//
+// `houses` exists because Gladys (5.2.1) refuses to save an emptied
+// `source: "houses"` select: once a house is chosen, the House field can no
+// longer be set back to empty ("every house"), the core answers 422 for "".
+export const POSITIONS = ['house', 'houses', 'address', 'commune'];
 
 export const DEFAULT_CONFIG = {
   position: 'house',
@@ -53,10 +57,13 @@ const text = (value) => (typeof value === 'string' ? value.trim() : '');
 export function normalizeConfig(raw = {}) {
   const source = raw && typeof raw === 'object' ? raw : {};
   const commune = text(source.commune).toUpperCase();
+  const position = POSITIONS.includes(source.position) ? source.position : DEFAULT_CONFIG.position;
   return {
-    position: POSITIONS.includes(source.position) ? source.position : DEFAULT_CONFIG.position,
-    // The selector of the chosen house (source: "houses"), null = the first located one.
-    houseSelector: text(source.house) || null,
+    // "Every house" is the house position without a chosen house, whatever
+    // the House field still holds.
+    position: position === 'houses' ? 'house' : position,
+    // The selector of the chosen house (source: "houses"), null = every located house.
+    houseSelector: position === 'houses' ? null : text(source.house) || null,
     address: text(source.address).slice(0, 200),
     // A valid INSEE code, or null; `communeInvalid` keeps what was typed otherwise.
     communeCode: isCommuneCode(commune) ? commune : null,

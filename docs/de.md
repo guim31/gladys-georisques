@@ -55,7 +55,7 @@ und wenn du die Konfiguration speicherst. Keine Flut von Anfragen.
 
 | Einstellung                | Was sie tut                                                                                                                                                                 |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Standort                   | **Mein Haus in Gladys** (Standard), **Eine Adresse** oder **Eine Gemeinde (INSEE-Code)**.                                                                                   |
+| Standort                   | **Mein Haus in Gladys** (Standard), **Alle meine Häuser in Gladys**, **Eine Adresse** oder **Eine Gemeinde (INSEE-Code)**.                                                  |
 | Haus                       | Leer (Standard): **alle Häuser in Gladys mit Standort** werden verfolgt, ein Gerät pro Gemeinde (siehe unten). Ein Haus: nur dieses.                                        |
 | Adresse                    | Hausnummer, Straße und Gemeinde, wie auf einem Umschlag: `12 rue de la Mairie, 31000 Toulouse`. Ein Gemeindename allein geht auch, aber ohne genaue Position (siehe unten). |
 | INSEE-Code der Gemeinde    | 5 Zeichen, **nicht die Postleitzahl**: `31555` für Toulouse, `2A004` für Ajaccio. Er steht auf dem Grundsteuerbescheid oder auf der Website des Insee.                      |
@@ -86,7 +86,9 @@ von 5 km, die vom genauen Ort abhängen, werden am **ersten dieser Häuser** in 
 Reihenfolge gelesen. Das Widget des anderen Hauses zeigt die Gemeinde ohne diese zwei Zeilen.
 
 Mit einem einzigen Haus ändert sich nichts. Um nur ein Haus von mehreren zu verfolgen, wähle es
-in der Einstellung Haus.
+in der Einstellung Haus. Um danach wieder alle Häuser zu verfolgen, wähle den Standort **Alle
+meine Häuser in Gladys**: Gladys 5.2.1 speichert eine wieder geleerte Einstellung Haus nicht
+(Fehler beim Speichern der Konfiguration).
 
 ### Prüfen: „Jetzt lesen“
 

@@ -53,7 +53,7 @@ démarrage et quand vous enregistrez la configuration. Pas de flot de requêtes.
 
 | Réglage                            | Ce qu'il fait                                                                                                                                                                    |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Position                           | **Ma maison dans Gladys** (par défaut), **Une adresse** ou **Une commune (code INSEE)**.                                                                                         |
+| Position                           | **Ma maison dans Gladys** (par défaut), **Toutes mes maisons dans Gladys**, **Une adresse** ou **Une commune (code INSEE)**.                                                     |
 | Maison                             | Vide (par défaut) : **toutes les maisons de Gladys qui ont une position** sont suivies, un appareil par commune (voir plus bas). Une maison : celle-là seulement.                |
 | Adresse                            | Numéro, rue et commune, comme sur une enveloppe : `12 rue de la Mairie, 31000 Toulouse`. Le nom d'une commune seul fonctionne aussi, mais sans position précise (voir plus bas). |
 | Code INSEE de la commune           | 5 caractères, **ce n'est pas le code postal** : `31555` pour Toulouse, `2A004` pour Ajaccio. Il figure sur votre avis de taxe foncière ou sur le site de l'Insee.                |
@@ -84,7 +84,9 @@ et la commune n'est lue qu'une fois. Son exposition aux argiles et ses sites Sev
 alphabétique. Le widget de l'autre maison montre la commune sans ces deux lignes.
 
 Avec une seule maison, rien ne change. Pour ne suivre qu'une maison parmi plusieurs, choisissez-la
-dans le réglage Maison.
+dans le réglage Maison. Pour revenir ensuite à toutes les maisons, choisissez la position
+**Toutes mes maisons dans Gladys** : Gladys 5.2.1 refuse d'enregistrer un réglage Maison remis à
+vide (« Une erreur s'est produite lors de l'enregistrement de la configuration »).
 
 ### Vérifier : « Lire maintenant »
 
