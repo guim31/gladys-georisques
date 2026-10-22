@@ -49,7 +49,7 @@ you save the configuration. No flood of requests.
 
 | Setting                       | What it does                                                                                                                                                  |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Location                      | **My house in Gladys** (default), **An address** or **A commune (INSEE code)**.                                                                               |
+| Location                      | **My house in Gladys** (default), **All my houses in Gladys**, **An address** or **A commune (INSEE code)**.                                                  |
 | House                         | Empty (default): **every house of Gladys that has a location** is followed, one device per commune (see below). A house: that one only.                       |
 | Address                       | Number, street and commune, as on an envelope: `12 rue de la Mairie, 31000 Toulouse`. A commune name alone works too, without a precise position (see below). |
 | INSEE code of the commune     | 5 characters, **not the postcode**: `31555` for Toulouse, `2A004` for Ajaccio. It is on your property tax notice or on the Insee website.                     |
@@ -79,7 +79,9 @@ the exact place, are read at the **first of these houses** in alphabetical order
 the other house shows the commune without these two lines.
 
 With one house, nothing changes. To follow a single house among several, choose it in the House
-setting.
+setting. To go back to every house afterwards, choose the location **All my houses in Gladys**:
+Gladys 5.2.1 refuses to save a House setting set back to empty ("An error occurred while saving
+the configuration").
 
 ### Check it: "Read now"
 

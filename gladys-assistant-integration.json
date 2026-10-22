@@ -89,10 +89,10 @@
         "es": "Ubicación"
       },
       "description": {
-        "en": "House: the location of your house in Gladys. Address: the address below. Commune: the INSEE code below (no clay exposure nor nearby Seveso sites, which need a position).",
-        "fr": "Maison : la position de votre maison dans Gladys. Adresse : l'adresse ci-dessous. Commune : le code INSEE ci-dessous (sans argiles ni sites Seveso proches, qui demandent une position).",
-        "de": "Haus: der Standort deines Hauses in Gladys. Adresse: die Adresse unten. Gemeinde: der INSEE-Code unten (ohne Ton und nahe Seveso-Betriebe, die einen Standort brauchen).",
-        "es": "Casa: la ubicación de su casa en Gladys. Dirección: la dirección de abajo. Municipio: el código INSEE de abajo (sin arcillas ni sitios Seveso cercanos, que requieren una ubicación)."
+        "en": "My house: the house chosen below (empty: every house). All my houses: every house of Gladys that has a location (one device per commune). Address: the address below. Commune: the INSEE code below (no clay exposure nor nearby Seveso sites, which need a position).",
+        "fr": "Ma maison : la maison choisie ci-dessous (vide : toutes). Toutes mes maisons : chaque maison de Gladys qui a une position (un appareil par commune). Adresse : l'adresse ci-dessous. Commune : le code INSEE ci-dessous (sans argiles ni sites Seveso proches, qui demandent une position).",
+        "de": "Mein Haus: das unten gewählte Haus (leer: alle). Alle meine Häuser: jedes Haus in Gladys mit Standort (ein Gerät pro Gemeinde). Adresse: die Adresse unten. Gemeinde: der INSEE-Code unten (ohne Ton und nahe Seveso-Betriebe, die einen Standort brauchen).",
+        "es": "Mi casa: la casa elegida abajo (vacío: todas). Todas mis casas: cada casa de Gladys con ubicación (un dispositivo por municipio). Dirección: la dirección de abajo. Municipio: el código INSEE de abajo (sin arcillas ni sitios Seveso cercanos, que requieren una ubicación)."
       },
       "required": false,
       "default": "house",
@@ -104,6 +104,15 @@
             "fr": "Ma maison dans Gladys",
             "de": "Mein Haus in Gladys",
             "es": "Mi casa en Gladys"
+          }
+        },
+        {
+          "value": "houses",
+          "label": {
+            "en": "All my houses in Gladys",
+            "fr": "Toutes mes maisons dans Gladys",
+            "de": "Alle meine Häuser in Gladys",
+            "es": "Todas mis casas en Gladys"
           }
         },
         {
@@ -137,10 +146,10 @@
         "es": "Casa"
       },
       "description": {
-        "en": "Empty: every house of Gladys that has a location, one device per commune. A house: that one only.",
-        "fr": "Vide : toutes les maisons de Gladys qui ont une position, un appareil par commune. Une maison : elle seule.",
-        "de": "Leer: alle Häuser in Gladys mit Standort, ein Gerät pro Gemeinde. Ein Haus: nur dieses.",
-        "es": "Vacío: todas las casas de Gladys con ubicación, un dispositivo por municipio. Una casa: solo esa."
+        "en": "Used when Location is \"My house in Gladys\". Empty: every house of Gladys that has a location, one device per commune. A house: that one only. To go back to every house, choose \"All my houses in Gladys\" above.",
+        "fr": "Utilisée quand Position vaut « Ma maison dans Gladys ». Vide : toutes les maisons de Gladys qui ont une position, un appareil par commune. Une maison : elle seule. Pour revenir à toutes les maisons, choisissez « Toutes mes maisons dans Gladys » plus haut.",
+        "de": "Gilt, wenn Standort „Mein Haus in Gladys“ ist. Leer: alle Häuser in Gladys mit Standort, ein Gerät pro Gemeinde. Ein Haus: nur dieses. Um wieder alle Häuser zu verfolgen, wähle oben „Alle meine Häuser in Gladys“.",
+        "es": "Se usa cuando Ubicación es «Mi casa en Gladys». Vacío: todas las casas de Gladys con ubicación, un dispositivo por municipio. Una casa: solo esa. Para volver a todas las casas, elija «Todas mis casas en Gladys» arriba."
       },
       "required": false
     },
