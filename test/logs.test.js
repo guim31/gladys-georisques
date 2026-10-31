@@ -60,7 +60,8 @@ test('LOG_LEVEL=debug shows the reads, never the position nor the address', asyn
   assert.ok(
     lines.some((line) => /Géorisques read for 94021: 9 part\(s\), 0 failed/.test(line.text)),
   );
-  const all = lines.map((line) => line.text).join('\n');
+  // Without the timestamp prefix: its milliseconds could match a number looked for below.
+  const all = lines.map(strip).join('\n');
   for (const secret of [
     String(HOUSE.latitude),
     String(HOUSE.longitude),
