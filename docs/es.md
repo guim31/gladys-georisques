@@ -38,7 +38,7 @@ guarda la configuración. Sin avalancha de peticiones.
 
 ## Requisitos
 
-- Gladys Assistant **5.2.0** o posterior.
+- Gladys Assistant **5.3.0** o posterior.
 - Acceso a Internet desde Gladys: la integración lee `www.georisques.gouv.fr` y, para encontrar
   el municipio de una casa o de una dirección, el servicio de direcciones del IGN
   (`data.geopf.fr`).

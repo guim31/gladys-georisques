@@ -183,3 +183,8 @@ test('the sources section says it is not affiliated with the Ministry', () => {
   assert.match(about.description.en, /Not affiliated with the French Ministry/);
   assert.match(about.description.fr, /Non affiliée au ministère/);
 });
+
+test('the catalog countries: France, which needs Gladys >= 5.3.0', () => {
+  assert.deepEqual(manifest.countries, ['FR']);
+  assert.match(manifest.gladys_version, /^>=\s*5\.3\.0$/, 'countries needs Gladys 5.3.0');
+});
