@@ -37,7 +37,7 @@ démarrage et quand vous enregistrez la configuration. Pas de flot de requêtes.
 
 ## Prérequis
 
-- Gladys Assistant **5.2.0** ou plus récent.
+- Gladys Assistant **5.3.0** ou plus récent.
 - Un accès à Internet depuis Gladys : l'intégration lit `www.georisques.gouv.fr` et, pour
   trouver la commune d'une maison ou d'une adresse, le service d'adresses de l'IGN
   (`data.geopf.fr`).

@@ -39,7 +39,7 @@ und wenn du die Konfiguration speicherst. Keine Flut von Anfragen.
 
 ## Voraussetzungen
 
-- Gladys Assistant **5.2.0** oder neuer.
+- Gladys Assistant **5.3.0** oder neuer.
 - Internetzugang für Gladys: Die Integration liest `www.georisques.gouv.fr` und, um die Gemeinde
   eines Hauses oder einer Adresse zu finden, den Adressdienst des IGN (`data.geopf.fr`).
 - Ein Zuhause **in Frankreich**: im Mutterland oder in Übersee für die Daten, die Géorisques

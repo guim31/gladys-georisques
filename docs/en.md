@@ -35,7 +35,7 @@ you save the configuration. No flood of requests.
 
 ## Requirements
 
-- Gladys Assistant **5.2.0** or later.
+- Gladys Assistant **5.3.0** or later.
 - Internet access from Gladys: the integration reads `www.georisques.gouv.fr` and, to find the
   commune of a house or of an address, the address service of IGN (`data.geopf.fr`).
 - A home **in France**: mainland, or overseas for the data Géorisques publishes there.

@@ -39,7 +39,7 @@ User documentation: [English](docs/en.md) · [Français](docs/fr.md) · [Deutsch
 
 ## Requirements
 
-- Gladys Assistant **5.2.0** or later (the `houses` select of the configuration).
+- Gladys Assistant **5.3.0** or later (catalog countries; the `houses` select of the configuration needs 5.2.0).
 - Internet access from Gladys to `www.georisques.gouv.fr` and `data.geopf.fr` (address service
   of IGN). No account, no key.
 - A home in France.
